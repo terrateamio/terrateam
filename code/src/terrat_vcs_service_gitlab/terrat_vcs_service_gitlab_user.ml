@@ -2,7 +2,7 @@ module Oauth = struct
   module Http = Abb_curl.Make (Abb)
 
   module Sql = struct
-    let read s = Pgsql_io.clean_string s
+    let select_user_token_sql = Mql_sql.read [%blob "sql/select_gitlab_user2_tokens.sql"]
 
     let select_user_token () =
       Pgsql_io.Typed_sql.(
@@ -16,13 +16,15 @@ module Oauth = struct
         //
         (* refresh_token *)
         Ret.text
-        /^ read [%blob "sql/select_gitlab_user2_tokens.sql"]
+        /^ select_user_token_sql
         /% Var.uuid "user_id")
+
+    let update_gitlab_user2_tokens_sql = Mql_sql.read [%blob "sql/update_gitlab_user2_tokens.sql"]
 
     let update_gitlab_user2_tokens () =
       Pgsql_io.Typed_sql.(
         sql
-        /^ read [%blob "sql/update_gitlab_user2_tokens.sql"]
+        /^ update_gitlab_user2_tokens_sql
         /% Var.uuid "user_id"
         /% Var.text "token"
         /% Var.(option (timestamptz "expiration"))
@@ -161,7 +163,7 @@ module Oauth = struct
 end
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_gitlab_user_id_sql = Mql_sql.read [%blob "sql/select_gitlab_user2_by_user_id.sql"]
 
   let select_gitlab_user_id () =
     Pgsql_io.Typed_sql.(
@@ -181,7 +183,7 @@ module Sql = struct
       //
       (* gitlab_user_id *)
       Ret.bigint
-      /^ read [%blob "sql/select_gitlab_user2_by_user_id.sql"]
+      /^ select_gitlab_user_id_sql
       /% Var.uuid "user_id")
 end
 

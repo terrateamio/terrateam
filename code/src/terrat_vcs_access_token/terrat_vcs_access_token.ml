@@ -8,17 +8,26 @@ module Make (_ : Terrat_vcs_provider2.S) (S : S) = struct
   module Logs = (val Logs.src_log src : Logs.LOG)
 
   module Sql = struct
+    let insert_access_token_sql =
+      Mql_sql.read
+        "insert into access_tokens (capabilities, name, user_id) values ($capabilities, $name, \
+         $user_id) returning id"
+
     let insert_access_token () =
       Pgsql_io.Typed_sql.(
         sql
         //
         (* id *)
         Ret.uuid
-        /^ "insert into access_tokens (capabilities, name, user_id) values ($capabilities, $name, \
-            $user_id) returning id"
+        /^ insert_access_token_sql
         /% Var.(ud (json "capabilities") [%to_yojson: Terrat_user.Capability.t list])
         /% Var.text "name"
         /% Var.uuid "user_id")
+
+    let select_access_tokens_sql =
+      Mql_sql.read
+        "select id, name, capabilities from access_tokens where user_id = $user_id order by name \
+         limit 100"
 
     let select_access_tokens () =
       Pgsql_io.Typed_sql.(
@@ -32,16 +41,14 @@ module Make (_ : Terrat_vcs_provider2.S) (S : S) = struct
         //
         (* capabilities *)
         Ret.u Ret.json CCFun.([%of_yojson: Terrat_user.Capability.t list] %> CCOption.of_result)
-        /^ "select id, name, capabilities from access_tokens where user_id = $user_id order by \
-            name limit 100"
+        /^ select_access_tokens_sql
         /% Var.uuid "user_id")
 
+    let delete_access_token_sql =
+      Mql_sql.read "delete from access_tokens where user_id = $user_id and id = $id"
+
     let delete_access_token () =
-      Pgsql_io.Typed_sql.(
-        sql
-        /^ "delete from access_tokens where user_id = $user_id and id = $id"
-        /% Var.uuid "user_id"
-        /% Var.uuid "id")
+      Pgsql_io.Typed_sql.(sql /^ delete_access_token_sql /% Var.uuid "user_id" /% Var.uuid "id")
   end
 
   module List = struct

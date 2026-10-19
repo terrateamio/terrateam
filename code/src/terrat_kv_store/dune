@@ -1,5 +1,13 @@
 (library
  (name terrat_kv_store)
- (libraries abb containers kv_store_intf pgsql_io terrat_user uuidm yojson)
+ (libraries
+  abb
+  containers
+  kv_store_intf
+  mql_sql
+  pgsql_io
+  terrat_user
+  uuidm
+  yojson)
  (preprocess
   (pps ppx_deriving.show ppx_deriving_yojson)))

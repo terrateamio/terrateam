@@ -1,4 +1,10 @@
-type err = Pgsql_io.err [@@deriving show]
+type err =
+  [ Pgsql_io.err
+  | (* MQL cannot read the column list or the comparison that this module builds, or a query lost
+       its [$name] variable.  Both are defects of this code and not of the caller. *)
+    `Mql_err of Mql.Ast.err
+  ]
+[@@deriving show]
 
 type t' = {
   db : Pgsql_io.t;

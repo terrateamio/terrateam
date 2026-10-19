@@ -1,10 +1,12 @@
 module Sql = struct
-  let github_more_rows =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.bigint /^ "select repository from github_dirspace_locking_migration limit 1")
+  let github_more_rows_sql =
+    Mql_sql.read "select repository from github_dirspace_locking_migration limit 1"
+
+  let github_more_rows = Pgsql_io.Typed_sql.(sql // Ret.bigint /^ github_more_rows_sql)
 
   let github_perform_sql =
-    {|
+    Mql_sql.read
+      {|
      with
      batch as (
          select * from github_dirspace_locking_migration limit 100 for update skip locked
@@ -20,12 +22,14 @@ module Sql = struct
 
   let github_perform = Pgsql_io.Typed_sql.(sql // Ret.text /^ github_perform_sql)
 
-  let gitlab_more_rows =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.bigint /^ "select repository from gitlab_dirspace_locking_migration limit 1")
+  let gitlab_more_rows_sql =
+    Mql_sql.read "select repository from gitlab_dirspace_locking_migration limit 1"
+
+  let gitlab_more_rows = Pgsql_io.Typed_sql.(sql // Ret.bigint /^ gitlab_more_rows_sql)
 
   let gitlab_perform_sql =
-    {|
+    Mql_sql.read
+      {|
      with
      batch as (
          select * from gitlab_dirspace_locking_migration limit 100 for update skip locked

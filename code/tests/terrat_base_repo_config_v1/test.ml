@@ -498,6 +498,68 @@ let test_workflow_plan_extra_args_to_version_1_round_trip =
         (extra_args_json (with_extra_args [ "--foo" ]));
       ())
 
+let log_output_step ?log_output ?(cmd = []) type_ =
+  `Assoc
+    (("type", `String type_)
+    :: CCList.filter_map
+         CCFun.id
+         [
+           CCOption.map (fun b -> ("log_output", `Bool b)) log_output;
+           (match cmd with
+           | [] -> None
+           | cmd -> Some ("cmd", `List (CCList.map (fun c -> `String c) cmd)));
+         ])
+
+(* Version_1 JSON of the init, plan and run steps of the workflow, the apply step, and the plan
+   pre hook, in that order. *)
+let log_output_round_trip ?log_output () =
+  let open Yojson.Safe.Util in
+  let json =
+    `Assoc
+      [
+        ( "workflows",
+          `List
+            [
+              workflow_entry
+                ~plan:
+                  [
+                    log_output_step ?log_output "init";
+                    log_output_step ?log_output "plan";
+                    log_output_step ?log_output ~cmd:[ "true" ] "run";
+                  ]
+                ~apply:[ log_output_step ?log_output "apply" ]
+                "";
+            ] );
+        ( "hooks",
+          `Assoc
+            [
+              ( "plan",
+                `Assoc [ ("pre", `List [ log_output_step ?log_output ~cmd:[ "true" ] "run" ]) ] );
+            ] );
+      ]
+  in
+  let cfg = Oth.Assert.ok_pp ~pp:V1.pp_of_version_1_json_err (V1.of_version_1_json json) in
+  let v1 = Repo.Version_1.to_yojson (V1.to_version_1 cfg) in
+  let entry = CCList.hd (to_list (member "workflows" v1)) in
+  to_list (member "plan" entry)
+  @ to_list (member "apply" entry)
+  @ to_list (member "pre" (member "plan" (member "hooks" v1)))
+
+let test_workflow_log_output_to_version_1_round_trip =
+  Oth.test ~name:"workflows: log_output round-trips through Version_1" (fun _ ->
+      let assert_log_output expected steps =
+        Oth.Assert.eq
+          ~eq:(CCList.equal Yojson.Safe.equal)
+          ~pp:(CCList.pp Yojson.Safe.pp)
+          (CCList.replicate 5 expected)
+          (CCList.map (Yojson.Safe.Util.member "log_output") steps)
+      in
+      (* A value equal to the schema default is omitted from the output. *)
+      assert_log_output `Null (log_output_round_trip ());
+      assert_log_output `Null (log_output_round_trip ~log_output:true ());
+      assert_log_output (`Bool false) (log_output_round_trip ~log_output:false ());
+      ())
+
 let test_workflow_extra_steps_allowed =
   Oth.test ~name:"workflows: extra steps around plan and apply are allowed" (fun _ ->
       let json =
@@ -1351,6 +1413,7 @@ let test =
       test_workflow_visible_on_is_read;
       test_workflow_visible_on_to_version_1_round_trip;
       test_workflow_plan_extra_args_to_version_1_round_trip;
+      test_workflow_log_output_to_version_1_round_trip;
       test_workflow_extra_steps_allowed;
       test_workflow_missing_step_reports_index;
       test_parse_rejects_bad_glob_dir_key;

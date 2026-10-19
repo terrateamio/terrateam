@@ -29,15 +29,11 @@ end
 
 let max_page_size = 100
 
-let replace_where q = function
-  | "" -> CCString.replace ~sub:"{{where}}" ~by:"" q
-  | where -> CCString.replace ~sub:"{{where}}" ~by:("where " ^ where) q
-
 let set_timeout timeout =
-  Pgsql_io.Typed_sql.(sql /^ Printf.sprintf "set local statement_timeout = '%s'" timeout)
+  Pgsql_io.Typed_sql.(sql /^ Mql_sql.set ~local:true ~name:"statement_timeout" timeout)
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let upsert_user_installations_sql = Mql_sql.read [%blob "sql/upsert_user_installations.sql"]
 
   let upsert_user_installations () =
     Pgsql_io.Typed_sql.(
@@ -54,7 +50,7 @@ module Sql = struct
       //
       (* created_at *)
       Ret.text
-      /^ read [%blob "sql/upsert_user_installations.sql"]
+      /^ upsert_user_installations_sql
       /% Var.uuid "user_id"
       /% Var.(array (bigint "installation_ids")))
 end
@@ -133,7 +129,8 @@ module Make (S : S with type Account_id.t = int) = struct
 
   module Webhook = struct
     module Sql = struct
-      let read s = Pgsql_io.clean_string s
+      let insert_or_select_installation_sql =
+        Mql_sql.read [%blob "sql/insert_or_select_installation.sql"]
 
       let insert_or_select_installation =
         Pgsql_io.Typed_sql.(
@@ -144,7 +141,7 @@ module Make (S : S with type Account_id.t = int) = struct
           //
           (* state *)
           Ret.text
-          /^ read [%blob "sql/insert_or_select_installation.sql"]
+          /^ insert_or_select_installation_sql
           /% Var.bigint "id"
           /% Var.text "name"
           /% Var.text "tier")
@@ -287,7 +284,8 @@ module Make (S : S with type Account_id.t = int) = struct
 
   module List_repos = struct
     module Sql = struct
-      let read s = Pgsql_io.clean_string s
+      let select_installation_repos_page_sql =
+        Mql_sql.read [%blob "sql/select_installation_repos_page.sql"]
 
       let select_installation_repos_page () =
         Pgsql_io.Typed_sql.(
@@ -307,7 +305,7 @@ module Make (S : S with type Account_id.t = int) = struct
           //
           (* setup *)
           Ret.boolean
-          /^ read [%blob "sql/select_installation_repos_page.sql"]
+          /^ select_installation_repos_page_sql
           /% Var.uuid "user_id"
           /% Var.bigint "installation_id"
           /% Var.(option (text "prev_name")))
@@ -422,11 +420,10 @@ module Make (S : S with type Account_id.t = int) = struct
 
   module List_dirspaces = struct
     module Sql = struct
-      let read s =
-        s
-        |> CCString.split_on_char '\n'
-        |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
-        |> CCString.concat "\n"
+      let select_dirspaces_page = Mql_sql.read_ast [%blob "sql/select_dirspaces_page.sql"]
+
+      let select_dirspaces_where where =
+        Mql_sql.with_where ~name:"where" select_dirspaces_page where
 
       let select_dirspaces where =
         Pgsql_io.Typed_sql.(
@@ -491,7 +488,7 @@ module Make (S : S with type Account_id.t = int) = struct
           //
           (* environment *)
           Ret.(option text)
-          /^ replace_where (read [%blob "sql/select_dirspaces_page.sql"]) where
+          /^ where
           /% Var.uuid "user"
           /% Var.bigint "installation_id"
           /% Var.text "tz"
@@ -555,104 +552,112 @@ module Make (S : S with type Account_id.t = int) = struct
       type err =
         [ Pgsql_pool.err
         | Pgsql_io.err
+        | `Mql_err of Mql.Ast.err
         ]
 
       let run_query ?cursor query return =
         let q = query.query in
-        let where = Terrat_sql_of_tag_query.sql q in
-        let search =
-          Pgsql_pagination.Search.(
-            create
-              ~page_size:(CCInt.min max_page_size query.limit)
-              ~dir:(Terrat_sql_of_tag_query.sort_dir q)
-              columns)
-        in
-        let created_at, dir, workspace, id =
-          match cursor with
-          | Some (created_at, dir, workspace, id) ->
-              (Some created_at, Some dir, Some workspace, Some id)
-          | None -> (None, None, None, None)
-        in
-        Pgsql_pool.with_conn query.storage ~f:(fun db ->
-            let open Abbs_fc.Infix_result_monad in
-            Pgsql_io.tx db ~f:(fun () ->
-                Pgsql_io.Prepared_stmt.execute
-                  db
-                  (set_timeout
-                     (Terrat_config.statement_timeout
-                     @@ Terrat_vcs_service_gitlab_provider.Api.Config.config query.config))
-                >>= fun () ->
-                Metrics.Psql_query_time.time (Metrics.psql_query_time "select_dirspaces") (fun () ->
-                    return
-                      search
+        match Sql.select_dirspaces_where (Terrat_sql_of_tag_query.sql q) with
+        | Error err -> Abbs_fc.return_err (`Mql_err err)
+        | Ok where ->
+            let search =
+              Pgsql_pagination.Search.(
+                create
+                  ~page_size:(CCInt.min max_page_size query.limit)
+                  ~dir:(Terrat_sql_of_tag_query.sort_dir q)
+                  columns)
+            in
+            let created_at, dir, workspace, id =
+              match cursor with
+              | Some (created_at, dir, workspace, id) ->
+                  (Some created_at, Some dir, Some workspace, Some id)
+              | None -> (None, None, None, None)
+            in
+            Pgsql_pool.with_conn query.storage ~f:(fun db ->
+                let open Abbs_fc.Infix_result_monad in
+                Pgsql_io.tx db ~f:(fun () ->
+                    Pgsql_io.Prepared_stmt.execute
                       db
-                      (Sql.select_dirspaces where)
-                      ~f:(fun
-                          id
+                      (set_timeout
+                         (Terrat_config.statement_timeout
+                         @@ Terrat_vcs_service_gitlab_provider.Api.Config.config query.config))
+                    >>= fun () ->
+                    Metrics.Psql_query_time.time
+                      (Metrics.psql_query_time "select_dirspaces")
+                      (fun () ->
+                        return
+                          search
+                          db
+                          (Sql.select_dirspaces where)
+                          ~f:(fun
+                              id
+                              dir
+                              workspace
+                              base_ref
+                              branch_ref
+                              completed_at
+                              created_at
+                              run_type
+                              state
+                              tag_query
+                              pull_number
+                              base_branch
+                              owner
+                              repo
+                              run_kind
+                              pull_request_title
+                              branch
+                              user
+                              run_id
+                              environment
+                            ->
+                            let module P = Terrat_api_components.Kind_pull_request in
+                            let module Ds = Terrat_api_components.Installation_dirspace in
+                            {
+                              Ds.base_branch;
+                              base_ref;
+                              branch;
+                              branch_ref;
+                              completed_at;
+                              created_at;
+                              dir;
+                              environment;
+                              id = Uuidm.to_string id;
+                              kind =
+                                (match (run_kind, pull_number) with
+                                | "drift", _ -> Ds.Kind.Kind_drift `Drift
+                                | "index", _ -> Ds.Kind.Kind_index `Index
+                                | "pr", Some pull_number ->
+                                    Ds.Kind.Kind_pull_request
+                                      {
+                                        P.pull_number = CCInt64.to_int pull_number;
+                                        pull_request_title;
+                                      }
+                                | _ -> assert false);
+                              owner;
+                              repo;
+                              run_id;
+                              run_type =
+                                CCResult.get_or_failwith
+                                @@ Terrat_api_components_run_type.of_yojson
+                                     (`String (Terrat_work_manifest3.Step.to_string run_type));
+                              state =
+                                CCResult.get_or_failwith
+                                @@ Terrat_api_components_dirspace_state.of_yojson (`String state);
+                              tag_query = Terrat_tag_query.to_string tag_query;
+                              user;
+                              workspace;
+                            })
+                          query.user
+                          (CCInt64.of_int query.installation_id)
+                          (Terrat_sql_of_tag_query.timezone q)
+                          (Terrat_sql_of_tag_query.strings q)
+                          (Terrat_sql_of_tag_query.bigints q)
+                          (Terrat_sql_of_tag_query.json q)
+                          created_at
                           dir
                           workspace
-                          base_ref
-                          branch_ref
-                          completed_at
-                          created_at
-                          run_type
-                          state
-                          tag_query
-                          pull_number
-                          base_branch
-                          owner
-                          repo
-                          run_kind
-                          pull_request_title
-                          branch
-                          user
-                          run_id
-                          environment
-                        ->
-                        let module P = Terrat_api_components.Kind_pull_request in
-                        let module Ds = Terrat_api_components.Installation_dirspace in
-                        {
-                          Ds.base_branch;
-                          base_ref;
-                          branch;
-                          branch_ref;
-                          completed_at;
-                          created_at;
-                          dir;
-                          environment;
-                          id = Uuidm.to_string id;
-                          kind =
-                            (match (run_kind, pull_number) with
-                            | "drift", _ -> Ds.Kind.Kind_drift `Drift
-                            | "index", _ -> Ds.Kind.Kind_index `Index
-                            | "pr", Some pull_number ->
-                                Ds.Kind.Kind_pull_request
-                                  { P.pull_number = CCInt64.to_int pull_number; pull_request_title }
-                            | _ -> assert false);
-                          owner;
-                          repo;
-                          run_id;
-                          run_type =
-                            CCResult.get_or_failwith
-                            @@ Terrat_api_components_run_type.of_yojson
-                                 (`String (Terrat_work_manifest3.Step.to_string run_type));
-                          state =
-                            CCResult.get_or_failwith
-                            @@ Terrat_api_components_dirspace_state.of_yojson (`String state);
-                          tag_query = Terrat_tag_query.to_string tag_query;
-                          user;
-                          workspace;
-                        })
-                      query.user
-                      (CCInt64.of_int query.installation_id)
-                      (Terrat_sql_of_tag_query.timezone q)
-                      (Terrat_sql_of_tag_query.strings q)
-                      (Terrat_sql_of_tag_query.bigints q)
-                      (Terrat_sql_of_tag_query.json q)
-                      created_at
-                      dir
-                      workspace
-                      id)))
+                          id)))
 
       let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
       let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
@@ -679,6 +684,11 @@ module Make (S : S with type Account_id.t = int) = struct
       let has_another_page t = Pgsql_pagination.has_next_page t
 
       let rspnc_of_err ~token = function
+        (* MQL cannot read the filter, or the query file lost its [$where].  Both are
+           defects of this code and not of the request. *)
+        | `Mql_err err ->
+            Logs.err (fun m -> m "%s : ERROR : MQL : %a" token Mql.Ast.pp_err err);
+            Brtl_rspnc.create ~status:`Internal_server_error ""
         | `Statement_timeout ->
             let module Bad_request = Terrat_api_components_bad_request_err in
             Logs.err (fun m -> m "%s : ERROR : STATEMENT_TIMEOUT" token);
@@ -798,12 +808,6 @@ module Make (S : S with type Account_id.t = int) = struct
     module T = Terrat_api_components.Installation_workflow_step_output
 
     module Sql = struct
-      let read s =
-        s
-        |> CCString.split_on_char '\n'
-        |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
-        |> CCString.concat "\n"
-
       let scope =
         let module T = Terrat_api_components.Workflow_step_output_scope in
         CCFun.(T.of_yojson %> CCResult.to_opt)
@@ -811,6 +815,12 @@ module Make (S : S with type Account_id.t = int) = struct
       let payload =
         let module T = T.Payload in
         CCFun.(T.of_yojson %> CCResult.to_opt)
+
+      let select_workflow_outputs_page =
+        Mql_sql.read_ast [%blob "sql/select_workflow_outputs_page.sql"]
+
+      let select_outputs_where where =
+        Mql_sql.with_where ~name:"where" select_workflow_outputs_page where
 
       let select_outputs where =
         Pgsql_io.Typed_sql.(
@@ -836,7 +846,7 @@ module Make (S : S with type Account_id.t = int) = struct
           //
           (* status *)
           Ret.text
-          /^ replace_where (read [%blob "sql/select_workflow_outputs_page.sql"]) where
+          /^ where
           /% Var.uuid "user"
           /% Var.bigint "installation_id"
           /% Var.uuid "work_manifest_id"
@@ -883,44 +893,49 @@ module Make (S : S with type Account_id.t = int) = struct
       type err =
         [ Pgsql_pool.err
         | Pgsql_io.err
+        | `Mql_err of Mql.Ast.err
         ]
 
       let run_query ?cursor query return =
         let q = query.query in
-        let where = Terrat_sql_of_tag_query.sql q in
-        let search =
-          Pgsql_pagination.Search.(
-            create
-              ~page_size:(CCInt.min max_page_size query.limit)
-              ~dir:(Terrat_sql_of_tag_query.sort_dir q)
-              columns)
-        in
-        let idx = cursor in
-        Pgsql_pool.with_conn query.storage ~f:(fun db ->
-            let open Abbs_fc.Infix_result_monad in
-            Pgsql_io.tx db ~f:(fun () ->
-                Metrics.Psql_query_time.time (Metrics.psql_query_time "select_outputs") (fun () ->
-                    Pgsql_io.Prepared_stmt.execute
-                      db
-                      (set_timeout
-                         (Terrat_config.statement_timeout
-                         @@ Terrat_vcs_service_gitlab_provider.Api.Config.config query.config))
-                    >>= fun () ->
-                    return
-                      search
-                      db
-                      (Sql.select_outputs where)
-                      ~f:(fun created_at idx ignore_errors payload scope step state ->
-                        { T.created_at; idx; ignore_errors; payload; scope; state; step })
-                      query.user
-                      (CCInt64.of_int query.installation_id)
-                      query.work_manifest_id
-                      (Terrat_sql_of_tag_query.strings q)
-                      (Terrat_sql_of_tag_query.bigints q)
-                      (Terrat_sql_of_tag_query.ints q)
-                      (Terrat_sql_of_tag_query.json q)
-                      idx
-                      query.lite)))
+        match Sql.select_outputs_where (Terrat_sql_of_tag_query.sql q) with
+        | Error err -> Abbs_fc.return_err (`Mql_err err)
+        | Ok where ->
+            let search =
+              Pgsql_pagination.Search.(
+                create
+                  ~page_size:(CCInt.min max_page_size query.limit)
+                  ~dir:(Terrat_sql_of_tag_query.sort_dir q)
+                  columns)
+            in
+            let idx = cursor in
+            Pgsql_pool.with_conn query.storage ~f:(fun db ->
+                let open Abbs_fc.Infix_result_monad in
+                Pgsql_io.tx db ~f:(fun () ->
+                    Metrics.Psql_query_time.time
+                      (Metrics.psql_query_time "select_outputs")
+                      (fun () ->
+                        Pgsql_io.Prepared_stmt.execute
+                          db
+                          (set_timeout
+                             (Terrat_config.statement_timeout
+                             @@ Terrat_vcs_service_gitlab_provider.Api.Config.config query.config))
+                        >>= fun () ->
+                        return
+                          search
+                          db
+                          (Sql.select_outputs where)
+                          ~f:(fun created_at idx ignore_errors payload scope step state ->
+                            { T.created_at; idx; ignore_errors; payload; scope; state; step })
+                          query.user
+                          (CCInt64.of_int query.installation_id)
+                          query.work_manifest_id
+                          (Terrat_sql_of_tag_query.strings q)
+                          (Terrat_sql_of_tag_query.bigints q)
+                          (Terrat_sql_of_tag_query.ints q)
+                          (Terrat_sql_of_tag_query.json q)
+                          idx
+                          query.lite)))
 
       let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
       let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
@@ -940,6 +955,9 @@ module Make (S : S with type Account_id.t = int) = struct
       let has_another_page = Pgsql_pagination.has_next_page
 
       let rspnc_of_err ~token = function
+        | `Mql_err err ->
+            Logs.err (fun m -> m "%s : ERROR : MQL : %a" token Mql.Ast.pp_err err);
+            Brtl_rspnc.create ~status:`Internal_server_error ""
         | `Statement_timeout ->
             let module Bad_request = Terrat_api_components_bad_request_err in
             Logs.err (fun m -> m "%s : ERROR : STATEMENT_TIMEOUT" token);
@@ -1058,17 +1076,16 @@ module Make (S : S with type Account_id.t = int) = struct
 
   module List_work_manifests = struct
     module Sql = struct
-      let read s =
-        s
-        |> CCString.split_on_char '\n'
-        |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
-        |> CCString.concat "\n"
-
       let dirspaces =
         let module T = struct
           type t = Terrat_api_components.Work_manifest_dirspace.t list [@@deriving yojson]
         end in
         CCFun.(T.of_yojson %> CCResult.to_opt)
+
+      let select_work_manifests_page = Mql_sql.read_ast [%blob "sql/select_work_manifests_page.sql"]
+
+      let select_work_manifests_where where =
+        Mql_sql.with_where ~name:"where" select_work_manifests_page where
 
       let select_work_manifests where =
         Pgsql_io.Typed_sql.(
@@ -1133,7 +1150,7 @@ module Make (S : S with type Account_id.t = int) = struct
           //
           (* environment *)
           Ret.(option text)
-          /^ replace_where (read [%blob "sql/select_work_manifests_page.sql"]) where
+          /^ where
           /% Var.uuid "user"
           /% Var.bigint "installation_id"
           /% Var.text "tz"
@@ -1182,104 +1199,110 @@ module Make (S : S with type Account_id.t = int) = struct
       type err =
         [ Pgsql_pool.err
         | Pgsql_io.err
+        | `Mql_err of Mql.Ast.err
         ]
 
       let run_query ?cursor query return =
         let q = query.query in
-        let where = Terrat_sql_of_tag_query.sql q in
-        let search =
-          Pgsql_pagination.Search.(
-            create
-              ~page_size:(CCInt.min max_page_size query.limit)
-              ~dir:(Terrat_sql_of_tag_query.sort_dir q)
-              columns)
-        in
-        let created_at, id =
-          match cursor with
-          | Some (created_at, id) -> (Some created_at, Some id)
-          | None -> (None, None)
-        in
-        Pgsql_pool.with_conn query.storage ~f:(fun db ->
-            let open Abbs_fc.Infix_result_monad in
-            Pgsql_io.tx db ~f:(fun () ->
-                Pgsql_io.Prepared_stmt.execute
-                  db
-                  (set_timeout
-                     (Terrat_config.statement_timeout
-                     @@ Terrat_vcs_service_gitlab_provider.Api.Config.config query.config))
-                >>= fun () ->
-                Metrics.Psql_query_time.time
-                  (Metrics.psql_query_time "select_work_manifests")
-                  (fun () ->
-                    return
-                      search
+        match Sql.select_work_manifests_where (Terrat_sql_of_tag_query.sql q) with
+        | Error err -> Abbs_fc.return_err (`Mql_err err)
+        | Ok where ->
+            let search =
+              Pgsql_pagination.Search.(
+                create
+                  ~page_size:(CCInt.min max_page_size query.limit)
+                  ~dir:(Terrat_sql_of_tag_query.sort_dir q)
+                  columns)
+            in
+            let created_at, id =
+              match cursor with
+              | Some (created_at, id) -> (Some created_at, Some id)
+              | None -> (None, None)
+            in
+            Pgsql_pool.with_conn query.storage ~f:(fun db ->
+                let open Abbs_fc.Infix_result_monad in
+                Pgsql_io.tx db ~f:(fun () ->
+                    Pgsql_io.Prepared_stmt.execute
                       db
-                      (Sql.select_work_manifests where)
-                      ~f:(fun
-                          id
-                          base_ref
-                          branch_ref
-                          completed_at
+                      (set_timeout
+                         (Terrat_config.statement_timeout
+                         @@ Terrat_vcs_service_gitlab_provider.Api.Config.config query.config))
+                    >>= fun () ->
+                    Metrics.Psql_query_time.time
+                      (Metrics.psql_query_time "select_work_manifests")
+                      (fun () ->
+                        return
+                          search
+                          db
+                          (Sql.select_work_manifests where)
+                          ~f:(fun
+                              id
+                              base_ref
+                              branch_ref
+                              completed_at
+                              created_at
+                              run_type
+                              state
+                              tag_query
+                              pull_number
+                              base_branch
+                              owner
+                              repo_id
+                              repo
+                              run_kind
+                              dirspaces
+                              pull_request_title
+                              branch
+                              user
+                              run_id
+                              environment
+                            ->
+                            let module P = Terrat_api_components.Kind_pull_request in
+                            let module Wm = Terrat_api_components.Installation_work_manifest in
+                            {
+                              Wm.base_branch;
+                              base_ref;
+                              branch;
+                              branch_ref;
+                              completed_at;
+                              created_at;
+                              dirspaces = CCOption.get_or ~default:[] dirspaces;
+                              environment;
+                              id = Uuidm.to_string id;
+                              kind =
+                                (match (run_kind, pull_number) with
+                                | "drift", _ -> Wm.Kind.Kind_drift `Drift
+                                | "index", _ -> Wm.Kind.Kind_index `Index
+                                | "pr", Some pull_number ->
+                                    Wm.Kind.Kind_pull_request
+                                      {
+                                        P.pull_number = CCInt64.to_int pull_number;
+                                        pull_request_title;
+                                      }
+                                | _ -> assert false);
+                              owner;
+                              repo;
+                              repo_id = CCInt64.to_string repo_id;
+                              run_id;
+                              run_type =
+                                CCResult.get_or_failwith
+                                @@ Terrat_api_components_run_type.of_yojson
+                                     (`String (Terrat_work_manifest3.Step.to_string run_type));
+                              state =
+                                CCResult.get_or_failwith
+                                @@ Terrat_api_components_work_manifest_state.of_yojson
+                                     (`String (Terrat_work_manifest3.State.to_string state));
+                              tag_query = Terrat_tag_query.to_string tag_query;
+                              user;
+                            })
+                          query.user
+                          (CCInt64.of_int query.installation_id)
+                          (Terrat_sql_of_tag_query.timezone q)
+                          (Terrat_sql_of_tag_query.strings q)
+                          (Terrat_sql_of_tag_query.bigints q)
+                          (Terrat_sql_of_tag_query.json q)
                           created_at
-                          run_type
-                          state
-                          tag_query
-                          pull_number
-                          base_branch
-                          owner
-                          repo_id
-                          repo
-                          run_kind
-                          dirspaces
-                          pull_request_title
-                          branch
-                          user
-                          run_id
-                          environment
-                        ->
-                        let module P = Terrat_api_components.Kind_pull_request in
-                        let module Wm = Terrat_api_components.Installation_work_manifest in
-                        {
-                          Wm.base_branch;
-                          base_ref;
-                          branch;
-                          branch_ref;
-                          completed_at;
-                          created_at;
-                          dirspaces = CCOption.get_or ~default:[] dirspaces;
-                          environment;
-                          id = Uuidm.to_string id;
-                          kind =
-                            (match (run_kind, pull_number) with
-                            | "drift", _ -> Wm.Kind.Kind_drift `Drift
-                            | "index", _ -> Wm.Kind.Kind_index `Index
-                            | "pr", Some pull_number ->
-                                Wm.Kind.Kind_pull_request
-                                  { P.pull_number = CCInt64.to_int pull_number; pull_request_title }
-                            | _ -> assert false);
-                          owner;
-                          repo;
-                          repo_id = CCInt64.to_string repo_id;
-                          run_id;
-                          run_type =
-                            CCResult.get_or_failwith
-                            @@ Terrat_api_components_run_type.of_yojson
-                                 (`String (Terrat_work_manifest3.Step.to_string run_type));
-                          state =
-                            CCResult.get_or_failwith
-                            @@ Terrat_api_components_work_manifest_state.of_yojson
-                                 (`String (Terrat_work_manifest3.State.to_string state));
-                          tag_query = Terrat_tag_query.to_string tag_query;
-                          user;
-                        })
-                      query.user
-                      (CCInt64.of_int query.installation_id)
-                      (Terrat_sql_of_tag_query.timezone q)
-                      (Terrat_sql_of_tag_query.strings q)
-                      (Terrat_sql_of_tag_query.bigints q)
-                      (Terrat_sql_of_tag_query.json q)
-                      created_at
-                      id)))
+                          id)))
 
       let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
       let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
@@ -1306,6 +1329,9 @@ module Make (S : S with type Account_id.t = int) = struct
       let has_another_page t = Pgsql_pagination.has_next_page t
 
       let rspnc_of_err ~token = function
+        | `Mql_err err ->
+            Logs.err (fun m -> m "%s : ERROR : MQL : %a" token Mql.Ast.pp_err err);
+            Brtl_rspnc.create ~status:`Internal_server_error ""
         | `Statement_timeout ->
             let module Bad_request = Terrat_api_components_bad_request_err in
             Logs.err (fun m -> m "%s : ERROR : STATEMENT_TIMEOUT" token);

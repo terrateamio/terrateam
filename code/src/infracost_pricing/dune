@@ -4,6 +4,7 @@
   abb
   abbs
   containers
+  mql_sql
   pgsql_io
   pgsql_pool
   ppx_deriving

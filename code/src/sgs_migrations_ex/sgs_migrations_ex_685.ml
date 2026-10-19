@@ -2,6 +2,43 @@ let src = Logs.Src.create "sgs_migrations_ex_685"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
+let create_table_hcl_refs_new_state_id_sql =
+  Mql_sql.read
+    "create table hcl_refs_new (state_id uuid not null, id text not null, ref text not null, \
+     attr_path text[] not null default '{}', index_kind text, index_val jsonb, is_bare boolean not \
+     null default true, resolvable boolean not null default true, from_depends_on boolean not null \
+     default false, ref_state_id uuid, primary key (state_id, id, ref, attr_path, \
+     from_depends_on))"
+
+let insert_into_hcl_refs_new_state_id_sql =
+  Mql_sql.read
+    "insert into hcl_refs_new (state_id, id, ref, attr_path, is_bare, resolvable, from_depends_on, \
+     ref_state_id) select orig.state_id, orig.id, orig.ref, '{}'::text[], true, true, false, \
+     orig.ref_state_id from hcl_refs orig where not exists (select 1 from hcl_refs_new n where \
+     n.state_id = orig.state_id and n.id = orig.id and n.ref = orig.ref) on conflict do nothing"
+
+let drop_table_hcl_refs_cascade_sql = Mql_sql.read "drop table hcl_refs cascade"
+let alter_table_hcl_refs_new_rename_sql = Mql_sql.read "alter table hcl_refs_new rename to hcl_refs"
+
+let alter_table_hcl_refs_add_sql =
+  Mql_sql.read
+    "alter table hcl_refs add foreign key (state_id, id) references hcl (state_id, id) on delete \
+     cascade"
+
+let create_index_hcl_refs_state_ref_idx_on_sql =
+  Mql_sql.read "create index hcl_refs_state_ref_idx on hcl_refs (state_id, ref)"
+
+let select_chunk_sql =
+  Mql_sql.read
+    "select state_id, id, coalesce(module_address, '') as module_address, data from hcl where \
+     (state_id, id) > ($state_id_cursor, $id_cursor) order by state_id, id limit $limit"
+
+let insert_edge_sql =
+  Mql_sql.read
+    "insert into hcl_refs_new (state_id, id, ref, attr_path, is_bare, resolvable, from_depends_on) \
+     values ($state_id, $id, $ref, $attr_path, $is_bare, $resolvable, $from_depends_on) on \
+     conflict do nothing"
+
 (* Single-migration create+populate+swap for hcl_refs.
    1. CREATE TABLE hcl_refs_new with the structured-edges shape (new PK,
       structured columns, no raw_refs).
@@ -23,7 +60,7 @@ let run db =
   let open Abbs_fc.Infix_result_monad in
   let module Ts = Pgsql_io.Typed_sql in
   let module Ps = Pgsql_io.Prepared_stmt in
-  let exec stmt = Ps.execute db Ts.(sql /^ Pgsql_io.clean_string stmt) in
+  let exec stmt = Ps.execute db Ts.(sql /^ stmt) in
   let chunk_limit = 1000 in
   let select_chunk =
     Ts.(
@@ -32,8 +69,7 @@ let run db =
       // Ret.text
       // Ret.text
       // Ret.jsonb
-      /^ "select state_id, id, coalesce(module_address, '') as module_address, data from hcl where \
-          (state_id, id) > ($state_id_cursor, $id_cursor) order by state_id, id limit $limit"
+      /^ select_chunk_sql
       /% Var.uuid "state_id_cursor"
       /% Var.text "id_cursor"
       /% Var.integer "limit")
@@ -41,9 +77,7 @@ let run db =
   let insert_edge =
     Ts.(
       sql
-      /^ "insert into hcl_refs_new (state_id, id, ref, attr_path, is_bare, resolvable, \
-          from_depends_on) values ($state_id, $id, $ref, $attr_path, $is_bare, $resolvable, \
-          $from_depends_on) on conflict do nothing"
+      /^ insert_edge_sql
       /% Var.uuid "state_id"
       /% Var.text "id"
       /% Var.text "ref"
@@ -121,12 +155,7 @@ let run db =
     Ps.execute db insert_edge state_id id to_addr attr_path is_bare resolvable from_depends_on
   in
   Logs.info (fun m -> m "HCL_REFS_STRUCTURED_EDGES : creating staging table");
-  exec
-    "create table hcl_refs_new (state_id uuid not null, id text not null, ref text not null, \
-     attr_path text[] not null default '{}', index_kind text, index_val jsonb, is_bare boolean not \
-     null default true, resolvable boolean not null default true, from_depends_on boolean not null \
-     default false, ref_state_id uuid, primary key (state_id, id, ref, attr_path, \
-     from_depends_on))"
+  exec create_table_hcl_refs_new_state_id_sql
   >>= fun () ->
   Logs.info (fun m -> m "HCL_REFS_STRUCTURED_EDGES : backfilling from hcl.data");
   let rec loop ~state_id_cursor ~id_cursor ~total =
@@ -159,22 +188,16 @@ let run db =
   >>= fun () ->
   Logs.info (fun m ->
       m "HCL_REFS_STRUCTURED_EDGES : preserving cross-state and module-input bridge rows");
-  exec
-    "insert into hcl_refs_new (state_id, id, ref, attr_path, is_bare, resolvable, from_depends_on, \
-     ref_state_id) select orig.state_id, orig.id, orig.ref, '{}'::text[], true, true, false, \
-     orig.ref_state_id from hcl_refs orig where not exists (select 1 from hcl_refs_new n where \
-     n.state_id = orig.state_id and n.id = orig.id and n.ref = orig.ref) on conflict do nothing"
+  exec insert_into_hcl_refs_new_state_id_sql
   >>= fun () ->
   Logs.info (fun m -> m "HCL_REFS_STRUCTURED_EDGES : swapping tables");
-  exec "drop table hcl_refs cascade"
+  exec drop_table_hcl_refs_cascade_sql
   >>= fun () ->
-  exec "alter table hcl_refs_new rename to hcl_refs"
+  exec alter_table_hcl_refs_new_rename_sql
   >>= fun () ->
-  exec
-    "alter table hcl_refs add foreign key (state_id, id) references hcl (state_id, id) on delete \
-     cascade"
+  exec alter_table_hcl_refs_add_sql
   >>= fun () ->
-  exec "create index hcl_refs_state_ref_idx on hcl_refs (state_id, ref)"
+  exec create_index_hcl_refs_state_ref_idx_on_sql
   >>| fun () ->
   Logs.info (fun m -> m "HCL_REFS_STRUCTURED_EDGES : complete");
   `Sync

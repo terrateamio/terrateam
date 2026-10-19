@@ -1,5 +1,5 @@
 (library
  (name mql_lexer)
- (libraries mql_parser sedlex)
+ (libraries containers mql_ast mql_parser sedlex)
  (preprocess
   (pps sedlex.ppx)))

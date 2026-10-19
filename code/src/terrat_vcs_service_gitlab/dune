@@ -7,6 +7,7 @@
   gitlab_webhooks_decoder
   jsonu
   logs
+  mql_sql
   pgsql_pagination
   sln
   terrat_brand

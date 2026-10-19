@@ -4,13 +4,11 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 module Fc = Abbs_fc
 
 module Sql = struct
+  let find_user_by_email_sql = Mql_sql.read [%blob "./sql/select_user_by_email_for_login.sql"]
+
   let find_user_by_email () =
     Pgsql_io.Typed_sql.(
-      sql
-      // Ret.uuid
-      // Ret.(option text)
-      /^ [%blob "./sql/select_user_by_email_for_login.sql"]
-      /% Var.text "email")
+      sql // Ret.uuid // Ret.(option text) /^ find_user_by_email_sql /% Var.text "email")
 end
 
 let run config storage =

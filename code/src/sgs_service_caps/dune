@@ -10,6 +10,7 @@
   containers
   json_schema
   logs
+  mql_sql
   pgsql_io
   pgsql_pool
   sg_caps_json

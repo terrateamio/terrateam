@@ -12,7 +12,7 @@ module type S = sig
 end
 
 module Sql = struct
-  let read s = Pgsql_io.clean_string s
+  let select_username_sql = Mql_sql.read [%blob "sql/select_username_for_repo_delete.sql"]
 
   let select_username () =
     Pgsql_io.Typed_sql.(
@@ -20,7 +20,7 @@ module Sql = struct
       //
       (* username *)
       Ret.text
-      /^ read [%blob "sql/select_username_for_repo_delete.sql"]
+      /^ select_username_sql
       /% Var.uuid "user_id")
 end
 

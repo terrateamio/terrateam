@@ -25,6 +25,7 @@ end
 type t = {
   env : Env.t option; [@default None]
   extra_args : Extra_args.t option; [@default None]
+  log_output : bool; [@default true]
   type_ : Type.t; [@key "type"]
   visible_on : Terrat_repo_config_visible_on.t option; [@default None]
 }

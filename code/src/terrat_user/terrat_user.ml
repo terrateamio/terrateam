@@ -1,11 +1,13 @@
 module Sql = struct
+  let select_system_user_sql = Mql_sql.read "select id from users2 where type = 'system'"
+
   let select_system_user () =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* id *)
       Ret.uuid
-      /^ "select id from users2 where type = 'system'")
+      /^ select_system_user_sql)
 end
 
 module Capability = Terrat_user_caps
@@ -38,6 +40,9 @@ let rem_capability cap t =
 
 module Token = struct
   module Sql = struct
+    let select_encryption_key_sql =
+      Mql_sql.read "select encode(data, 'hex') from encryption_keys order by rank"
+
     let select_encryption_key () =
       (* The hex conversion is so that there are no issues with escaping
          the string *)
@@ -46,7 +51,7 @@ module Token = struct
         //
         (* data *)
         Ret.u Ret.text CCFun.(Cstruct.of_hex %> CCOption.return)
-        /^ "select encode(data, 'hex') from encryption_keys order by rank")
+        /^ select_encryption_key_sql)
   end
 
   (* The internal representation in JWT.  Prefix everything with "tt" to avoid

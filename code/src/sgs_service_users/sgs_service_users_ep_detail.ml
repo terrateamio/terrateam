@@ -5,6 +5,8 @@ module Fc = Abbs_fc
 module Common = Sgs_service_users_common
 
 module Sql = struct
+  let select_user_detail_sql = Mql_sql.read [%blob "./sql/select_user_detail.sql"]
+
   let select_user_detail () =
     Pgsql_io.Typed_sql.(
       sql
@@ -32,7 +34,7 @@ module Sql = struct
       //
       (* created_at *)
       Ret.text
-      /^ [%blob "./sql/select_user_detail.sql"]
+      /^ select_user_detail_sql
       /% Var.uuid "user_id")
 end
 

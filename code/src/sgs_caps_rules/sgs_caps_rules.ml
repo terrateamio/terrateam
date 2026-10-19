@@ -99,40 +99,37 @@ module Sql = struct
       (* capability_trie *)
       Sgs_user.caps_ret)
 
-  let list_alive () =
-    Pgsql_io.Typed_sql.(rule_returns sql /^ [%blob "./sql/list_alive_caps_groups_rules.sql"])
+  let list_alive_sql = Mql_sql.read [%blob "./sql/list_alive_caps_groups_rules.sql"]
+  let list_alive () = Pgsql_io.Typed_sql.(rule_returns sql /^ list_alive_sql)
+
+  let list_alive_by_tenant_sql =
+    Mql_sql.read [%blob "./sql/list_alive_caps_group_rules_by_tenant.sql"]
 
   let list_alive_by_tenant () =
-    Pgsql_io.Typed_sql.(
-      rule_returns sql
-      /^ [%blob "./sql/list_alive_caps_group_rules_by_tenant.sql"]
-      /% Var.uuid "tenant_id")
+    Pgsql_io.Typed_sql.(rule_returns sql /^ list_alive_by_tenant_sql /% Var.uuid "tenant_id")
+
+  let add_sql = Mql_sql.read [%blob "./sql/add_groups_rules.sql"]
+  let get_alive_by_tenant_sql = Mql_sql.read [%blob "./sql/get_alive_caps_group_rule_by_tenant.sql"]
 
   let get_alive_by_tenant () =
     Pgsql_io.Typed_sql.(
-      rule_returns sql
-      /^ [%blob "./sql/get_alive_caps_group_rule_by_tenant.sql"]
-      /% Var.uuid "tenant_id"
-      /% Var.uuid "id")
+      rule_returns sql /^ get_alive_by_tenant_sql /% Var.uuid "tenant_id" /% Var.uuid "id")
 
   let add () =
     Pgsql_io.Typed_sql.(
       sql
       // Ret.uuid
-      /^ [%blob "./sql/add_groups_rules.sql"]
+      /^ add_sql
       /% Var.uuid "tenant_id"
       /% Var.uuid "created_by"
       /% Var.(option (text "description"))
       /% Var.json "condition"
       /% Var.json "capability_trie")
 
+  let soft_delete_sql = Mql_sql.read [%blob "./sql/soft_delete_groups_rules.sql"]
+
   let soft_delete () =
-    Pgsql_io.Typed_sql.(
-      sql
-      // Ret.uuid
-      /^ [%blob "./sql/soft_delete_groups_rules.sql"]
-      /% Var.uuid "id"
-      /% Var.uuid "tenant_id")
+    Pgsql_io.Typed_sql.(sql // Ret.uuid /^ soft_delete_sql /% Var.uuid "id" /% Var.uuid "tenant_id")
 end
 
 let mk_rule id tenant_id created_at created_by description condition grant =

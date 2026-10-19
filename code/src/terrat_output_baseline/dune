@@ -4,6 +4,7 @@
   abb
   abb_fc
   containers
+  mql_sql
   pgsql_io
   ppx_deriving
   terrat_dirspace

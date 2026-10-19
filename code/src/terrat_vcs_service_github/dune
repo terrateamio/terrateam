@@ -5,6 +5,7 @@
   ISO8601
   jsonu
   logs
+  mql_sql
   pgsql_io
   pgsql_pagination
   pgsql_pool

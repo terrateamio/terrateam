@@ -147,6 +147,7 @@ module Workflow_step : sig
       env : string Sln_map.String.t option;
       format : Format.t; [@default Format.Code]
       ignore_errors : bool; [@default false]
+      log_output : bool; [@default true]
       on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]
       visible_on : Visible_on.t; [@default Visible_on.Failure]
@@ -158,6 +159,7 @@ module Workflow_step : sig
     type t = {
       env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
+      log_output : bool; [@default true]
       visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
     [@@deriving make, show, yojson, eq]
@@ -176,6 +178,7 @@ module Workflow_step : sig
       extra_args : string list option; [@default None]
           (** [None] when the step does not set [extra_args]. The runner then applies the engine's
               own default arguments, which an explicit list, even an empty one, replaces. *)
+      log_output : bool; [@default true]
       mode : Mode.t; [@default Mode.Strict]
       visible_on : Visible_on.t; [@default Visible_on.Always]
     }
@@ -186,6 +189,7 @@ module Workflow_step : sig
     type t = {
       env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
+      log_output : bool; [@default true]
       retry : Retry.t option;
       visible_on : Visible_on.t; [@default Visible_on.Always]
     }

@@ -6,6 +6,7 @@
   cstruct
   duration
   jwt
+  mql_sql
   pgsql_io
   terrat_user_caps
   uuidm)

@@ -7,22 +7,24 @@ type run_err =
   ]
 
 module Sql = struct
+  let insert_task_sql =
+    Mql_sql.read "insert into tasks (name, user_id) values ($name, $user_id) returning id"
+
   let insert_task () =
     Pgsql_io.Typed_sql.(
       sql
       //
       (* id *)
       Ret.uuid
-      /^ "insert into tasks (name, user_id) values ($name, $user_id) returning id"
+      /^ insert_task_sql
       /% Var.text "name"
       /% Var.option (Var.uuid "user_id"))
 
+  let update_task_sql =
+    Mql_sql.read "update tasks set state = $state, updated_at = now() where id = $id"
+
   let update_task () =
-    Pgsql_io.Typed_sql.(
-      sql
-      /^ "update tasks set state = $state, updated_at = now() where id = $id"
-      /% Var.uuid "id"
-      /% Var.text "state")
+    Pgsql_io.Typed_sql.(sql /^ update_task_sql /% Var.uuid "id" /% Var.text "state")
 end
 
 type 'a t = {

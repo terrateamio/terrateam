@@ -6,13 +6,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
   module Evaluator2 = Terrat_vcs_event_evaluator2.Make (P)
 
   module Sql = struct
+    let select_running_work_manifest_sql =
+      Mql_sql.read "select id from work_manifests where id = $id and state in ('queued', 'running')"
+
     let select_running_work_manifest () =
       Pgsql_io.Typed_sql.(
         sql
         //
         (* id *)
         Ret.uuid
-        /^ "select id from work_manifests where id = $id and state in ('queued', 'running')"
+        /^ select_running_work_manifest_sql
         /% Var.uuid "id")
   end
 
@@ -212,7 +215,8 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         }
 
     module Sql = struct
-      let read s = Pgsql_io.clean_string s
+      let select_installation_id_sql =
+        Mql_sql.read [%blob "sql/select_installation_id_from_work_manifest.sql"]
 
       let select_installation_id () =
         Pgsql_io.Typed_sql.(
@@ -220,7 +224,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           //
           (* id *)
           Ret.bigint
-          /^ read [%blob "sql/select_installation_id_from_work_manifest.sql"]
+          /^ select_installation_id_sql
           /% Var.uuid "id")
     end
 
@@ -306,14 +310,17 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         end in
         CCFun.(P.of_yojson %> CCResult.to_opt)
 
+      let select_workspaces_sql =
+        Mql_sql.read
+          "select dirspaces from work_manifests where id = $id and state in ('queued', 'running')"
+
       let select_workspaces =
         Pgsql_io.Typed_sql.(
           sql
           //
           (* dirspaces *)
           Ret.(u json dirspaces)
-          /^ "select dirspaces from work_manifests where id = $id and state in ('queued', \
-              'running')"
+          /^ select_workspaces_sql
           /% Var.uuid "id")
     end
 

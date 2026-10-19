@@ -4,6 +4,8 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 module Common = Sgs_service_caps_group_rule_common
 
 module Sql = struct
+  let states_owned_by_tenant_sql = Mql_sql.read [%blob "./sql/select_states_owned_by_tenant.sql"]
+
   (* Of the given state ids, the ones this tenant owns -- one query for the whole grant.  An id the
      tenant does not own (another tenant's state, or a nonexistent one) simply does not come back,
      so the caller flags any input id missing from the result. *)
@@ -11,7 +13,7 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       // Ret.uuid
-      /^ [%blob "./sql/select_states_owned_by_tenant.sql"]
+      /^ states_owned_by_tenant_sql
       /% Var.(str_array (uuid "state_ids"))
       /% Var.uuid "tenant_id")
 end

@@ -34,6 +34,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | `Noop
     | Pgsql_io.err
     | Pgsql_pool.err
+      (* [Terrat_kv_store] builds a part of a query and gives it to MQL to read.  A failure is a
+         defect of that code, thus the user is told only that the operation failed. *)
+    | `Mql_err of Mql.Ast.err
     | Str_template.err
     | P2.gate_add_approval_err
       (* A failure the user has already been told about.  Publishing anything

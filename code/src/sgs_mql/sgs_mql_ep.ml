@@ -19,11 +19,6 @@ let respond_bad_request ctx id data =
   let body = Yojson.Safe.pretty_to_string @@ Br.to_yojson { Br.id; data } in
   Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request body) ctx)
 
-(* Log an MQL error [err] with [pp], then respond with a 400 [Bad_request_err]. *)
-let log_mql_bad ctx id pp err data =
-  Logs.info (fun m -> m "%s : %a" (Brtl_ctx.token ctx) pp err);
-  respond_bad_request ctx id data
-
 (* Respond with a 500 and an empty body. *)
 let respond_internal_error ctx = Abb.Future.return (Sgs_eplib.respond_internal_error ctx)
 let pagination_error_headers err = Cohttp.Header.of_list [ ("mql-pagination-error", err) ]
@@ -39,6 +34,55 @@ let with_default_limit_header ~default_limit_applied headers =
       "mql-default-limit-applied"
       (string_of_int Sgs_mql_paged.default_limit)
   else headers
+
+(* How [respond] answers an error: a 400 that carries the id and data of a
+   [Bad_request_err], or a 500.  [respond] and [Tests.status_of_err] read this
+   one mapping, thus the tests see the status that the endpoint gives. *)
+type err_response =
+  | Bad_request of {
+      id : string;
+      data : string option;
+    }
+  | Internal_error
+
+let err_response = function
+  | #Mql_to_pgsql.apply_page_err as err ->
+      Bad_request { id = "APPLY_PAGE_ERR"; data = Some (Mql_to_pgsql.show_apply_page_err err) }
+  | `Table_access_err name -> Bad_request { id = "TABLE_ACCESS_ERR"; data = Some name }
+  | `Func_access_err name -> Bad_request { id = "FUNC_ACCESS_ERR"; data = Some name }
+  | `Cast_err name -> Bad_request { id = "CAST_ERR"; data = Some name }
+  (* A construct MQL reads so that it can read the SQL of this repository, but
+     that a query from outside must not get. *)
+  | `Construct_not_allowed_err name ->
+      Bad_request { id = "CONSTRUCT_NOT_ALLOWED_ERR"; data = Some name }
+  | `Type_mismatch_err _ as err ->
+      Bad_request { id = "TYPE_MISMATCH_ERR"; data = Some (Mql_to_pgsql.show_of_mql_err err) }
+  | `Unknown_column_err column -> Bad_request { id = "UNKNOWN_COLUMN_ERR"; data = Some column }
+  | `Invalid_identifier_err name -> Bad_request { id = "INVALID_IDENTIFIER_ERR"; data = Some name }
+  (* Unreachable from this endpoint -- [run_query] parses with the default
+     [variables:false], so a [$name] never gets as far as the compiler.  Handled
+     for the case an AST reaches [of_mql] by another route. *)
+  | `Variable_err name -> Bad_request { id = "VARIABLE_ERR"; data = Some name }
+  (* Unreachable from here -- [run_query] parses with no [Mql.Feature] enabled,
+     so a locking clause cannot even be lexed into an AST. Handled because
+     [of_mql] refuses it independently of that gate. *)
+  | `Locking_not_allowed_err -> Bad_request { id = "LOCKING_NOT_ALLOWED_ERR"; data = None }
+  (* Also unreachable from here: a write cannot be parsed without the
+     [Mql.Feature.Data_modifying] opt-in, which this endpoint never passes. *)
+  | `Data_modifying_not_allowed_err ->
+      Bad_request { id = "DATA_MODIFYING_NOT_ALLOWED_ERR"; data = None }
+  | `Ddl_not_allowed_err -> Bad_request { id = "DDL_NOT_ALLOWED_ERR"; data = None }
+  (* The compiler's post-condition audit rejected the compiler's OWN output: a
+     guard did not fire and we were about to emit a query naming something
+     outside the schema. That is our bug, not the caller's, so it is a 500 and it
+     is logged at error level -- this should never appear in a log. *)
+  | #Mql_to_pgsql.audit_err -> Internal_error
+  | `Ambiguous_column_err column -> Bad_request { id = "AMBIGUOUS_COLUMN_ERR"; data = Some column }
+  | #Mql.Ast.err as err -> Bad_request { id = "QUERY_ERR"; data = Some (Mql.Ast.show_err err) }
+  | `Syntax_err { Pgsql_io.message; _ } | `Pgsql_err { Pgsql_io.message; _ } ->
+      Bad_request { id = "QUERY_ERR"; data = Some message }
+  | `Statement_timeout -> Bad_request { id = "TIMEOUT_ERR"; data = None }
+  | #Pgsql_io.err | #Pgsql_pool.err -> Internal_error
 
 (* Translate the outcome of [run_query] into the endpoint's HTTP response. *)
 let respond ctx = function
@@ -66,47 +110,16 @@ let respond ctx = function
         rows
   | Ok { Sgs_mql_paged.pagination = `No_paginate; rows; default_limit_applied = _; limit = _ } ->
       respond_rows ctx rows
-  | Error (#Mql_to_pgsql.apply_page_err as err) ->
-      log_mql_bad
-        ctx
-        "APPLY_PAGE_ERR"
-        Mql_to_pgsql.pp_apply_page_err
-        err
-        (Some (Mql_to_pgsql.show_apply_page_err err))
-  | Error (`Table_access_err name as err) ->
-      log_mql_bad ctx "TABLE_ACCESS_ERR" Mql_to_pgsql.pp_of_mql_err err (Some name)
-  | Error (`Func_access_err name as err) ->
-      log_mql_bad ctx "FUNC_ACCESS_ERR" Mql_to_pgsql.pp_of_mql_err err (Some name)
-  | Error (`Cast_err name as err) ->
-      log_mql_bad ctx "CAST_ERR" Mql_to_pgsql.pp_of_mql_err err (Some name)
-  | Error (`Type_mismatch_err _ as err) ->
-      log_mql_bad
-        ctx
-        "TYPE_MISMATCH_ERR"
-        Mql_to_pgsql.pp_of_mql_err
-        err
-        (Some (Mql_to_pgsql.show_of_mql_err err))
-  | Error (`Unknown_column_err column as err) ->
-      log_mql_bad ctx "UNKNOWN_COLUMN_ERR" Mql_to_pgsql.pp_of_mql_err err (Some column)
-  | Error (`Invalid_identifier_err name as err) ->
-      log_mql_bad ctx "INVALID_IDENTIFIER_ERR" Mql_to_pgsql.pp_of_mql_err err (Some name)
-  | Error (`Ambiguous_column_err column as err) ->
-      log_mql_bad ctx "AMBIGUOUS_COLUMN_ERR" Mql_to_pgsql.pp_of_mql_err err (Some column)
-  | Error (#Mql.Ast.err as err) ->
-      log_mql_bad ctx "QUERY_ERR" Mql.Ast.pp_err err (Some (Mql.Ast.show_err err))
-  | Error (`Syntax_err { Pgsql_io.message; _ } as err) ->
-      Logs.info (fun m -> m "%s : QUERY_SYNTAX_ERR : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
-      respond_bad_request ctx "QUERY_ERR" (Some message)
-  | Error (`Pgsql_err { Pgsql_io.message; _ } as err) ->
-      Logs.info (fun m -> m "%s : QUERY_PGSQL_ERR : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
-      respond_bad_request ctx "QUERY_ERR" (Some message)
-  | Error `Statement_timeout -> respond_bad_request ctx "TIMEOUT_ERR" None
-  | Error (#Pgsql_io.err as err) ->
-      Logs.err (fun m -> m "%s : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
-      respond_internal_error ctx
-  | Error (#Pgsql_pool.err as err) ->
-      Logs.err (fun m -> m "%s : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
-      respond_internal_error ctx
+  | Error err -> (
+      match err_response err with
+      | Bad_request { id; data } ->
+          Logs.info (fun m ->
+              m "%s : %s : %a" (Brtl_ctx.token ctx) id Sgs_mql_paged.pp_query_err err);
+          respond_bad_request ctx id data
+      | Internal_error ->
+          Logs.err (fun m ->
+              m "%s : MQL_INTERNAL_ERR : %a" (Brtl_ctx.token ctx) Sgs_mql_paged.pp_query_err err);
+          respond_internal_error ctx)
 
 let run config storage q tz page =
   Sgs_user_session.with_user ~caps:Sgs_user_session.Caps.allow_all ~f:(fun user ->
@@ -154,4 +167,9 @@ end
 module Tests = struct
   let response_json = Schema.response_json
   let response_json_orchestration = Schema.response_json_orchestration
+
+  let status_of_err err =
+    match err_response err with
+    | Bad_request _ -> `Bad_request
+    | Internal_error -> `Internal_server_error
 end

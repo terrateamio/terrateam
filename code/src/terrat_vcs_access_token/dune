@@ -6,6 +6,7 @@
   brtl_ep
   containers
   logs
+  mql_sql
   terrat_api
   terrat_session
   terrat_user

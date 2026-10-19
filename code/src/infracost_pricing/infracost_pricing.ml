@@ -114,6 +114,8 @@ end
 type db_attribute_filters = Db_attribute_filter.t list [@@deriving to_yojson]
 
 module Sql = struct
+  let select_prices_sql = Mql_sql.read [%blob "sql/select_prices.sql"]
+
   let select_prices () =
     Pgsql_io.Typed_sql.(
       sql
@@ -138,7 +140,7 @@ module Sql = struct
       //
       (* merges the CNY prices *)
       Ret.boolean
-      /^ [%blob "sql/select_prices.sql"]
+      /^ select_prices_sql
       /% Var.(option (text "vendor_name"))
       /% Var.(option (text "service"))
       /% Var.(option (text "product_family"))

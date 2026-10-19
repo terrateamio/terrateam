@@ -336,7 +336,7 @@ struct
 
   module Service = struct
     module Sql = struct
-      let read s = Pgsql_io.clean_string s
+      let select_github_user2_exists_sql = Mql_sql.read [%blob "sql/select_github_user2_exists.sql"]
 
       let select_github_user2_exists =
         Pgsql_io.Typed_sql.(
@@ -344,7 +344,7 @@ struct
           //
           (* created_at *)
           Ret.text
-          /^ read [%blob "sql/select_github_user2_exists.sql"]
+          /^ select_github_user2_exists_sql
           /% Var.uuid "user_id")
     end
 
