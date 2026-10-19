@@ -185,6 +185,8 @@ The `stategraph` CLI reads these when it runs, by hand or on a runner. The serve
 | `TF_CMD` | Terraform or tofu binary that the CLI runs. It must exist when set |
 | `STATEGRAPH_ACTUATOR_CHUNK_SIZE` | Size of the chunks that the CLI uploads |
 | `STATEGRAPH_FETCH_RESULT_PARALLELISM` | Parallelism of the CLI result fetches |
+| `STATEGRAPH_REMOTE_MODULE_BATCH_BYTES` | Byte budget of the query of one batch of the CLI's committed reads. The default leaves room under the 8 KiB request line of the server image's nginx. A value that is not a positive integer falls back to the default |
+| `STATEGRAPH_REMOTE_MODULE_PARALLELISM` | How many batch requests of the CLI's committed reads are in flight at once. A value that is not a positive integer falls back to the default |
 
 ## Not supported
 

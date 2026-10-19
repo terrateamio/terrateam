@@ -70,11 +70,13 @@ module Get = struct
     end
 
     module Unauthorized = struct end
+    module Request_uri_too_long = struct end
 
     type t =
       [ `OK of OK.t
       | `Bad_request of Bad_request.t
       | `Unauthorized
+      | `Request_uri_too_long
       ]
     [@@deriving show, eq]
 
@@ -83,6 +85,7 @@ module Get = struct
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
         ("401", fun _ -> Ok `Unauthorized);
+        ("414", fun _ -> Ok `Request_uri_too_long);
       ]
   end
 
