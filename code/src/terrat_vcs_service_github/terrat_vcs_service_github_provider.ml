@@ -5225,6 +5225,21 @@ module Comment = struct
               success || ignore_errors)
             result.R2.steps
         in
+        (* A plan step whose payload carries no [has_changes] counts as having changes. *)
+        let has_changes =
+          CCList.exists
+            (fun { O.step; payload; success = _; ignore_errors = _; scope = _ } ->
+              match step with
+              | "tf/plan" | "pulumi/plan" | "custom/plan" | "fly/plan" | "stategraph/plan" -> (
+                  match O.Payload.to_yojson payload with
+                  | `Assoc fields -> (
+                      match Sln_list.String.assoc_opt "has_changes" fields with
+                      | Some (`Bool has_changes) -> has_changes
+                      | _ -> true)
+                  | _ -> true)
+              | _ -> false)
+            result.R2.steps
+        in
         let gates_or_denials =
           (match result.R2.gates with
             | Some (_ :: _) -> true
@@ -5233,8 +5248,8 @@ module Comment = struct
         in
         (* A stale result whose output is hidden gets its stale warning as a comment of its own. *)
         let post_classic_if_visible () =
-          if N.classic_comment_visible notifications ~run ~success ~gates_or_denials then
-            post_classic ()
+          if N.classic_comment_visible notifications ~run ~success ~has_changes ~gates_or_denials
+          then post_classic ()
           else CCOption.map_or ~default:(Abbs_fc.return_ok ()) publish_stale stale
         in
         if not unified then post_classic_if_visible ()

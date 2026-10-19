@@ -5,7 +5,7 @@ order: 4
 ---
 
 
-Deploy [Stategraph](/docs/admin/self-hosting) on Amazon ECS Fargate with the Stategraph ECS Terraform module.
+Deploy [Stategraph](/docs/admin/self-hosting) on Amazon ECS Fargate with the [Stategraph ECS Terraform module](https://github.com/stategraph/terraform-aws-stategraph-ecs).
 
 ## Before you begin
 
@@ -14,7 +14,6 @@ Deploy [Stategraph](/docs/admin/self-hosting) on Amazon ECS Fargate with the Sta
 - A VPC with private and public subnets, or the complete example that creates one
 - An ACM certificate for HTTPS
 - A domain name for the instance
-- The ECS Terraform module, available on request with onboarding support: [contact Stategraph](https://stategraph.com/contact) for the source
 
 ## Architecture
 
@@ -61,7 +60,7 @@ mkdir stategraph-ecs && cd stategraph-ecs
 ```hcl
 # main.tf
 module "stategraph" {
-  source = "<stategraph-ecs-module>?ref=v1.0.0"
+  source = "github.com/stategraph/terraform-aws-stategraph-ecs?ref=v1.0.0"
 
   # Network (your existing VPC)
   vpc_id             = "vpc-xxxxx"
@@ -173,7 +172,7 @@ module "vpc" {
 }
 
 module "stategraph" {
-  source = "<stategraph-ecs-module>?ref=v1.0.0"
+  source = "github.com/stategraph/terraform-aws-stategraph-ecs?ref=v1.0.0"
 
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnets
@@ -189,7 +188,7 @@ Set `create_database = false` and pass the connection details:
 
 ```hcl
 module "stategraph" {
-  source = "<stategraph-ecs-module>?ref=v1.0.0"
+  source = "github.com/stategraph/terraform-aws-stategraph-ecs?ref=v1.0.0"
 
   # ... other required variables
 
@@ -210,7 +209,7 @@ Local email and password sign-in is on by default. Turn on Google or OIDC sign-i
 
 ```hcl
 module "stategraph" {
-  source = "<stategraph-ecs-module>?ref=v1.0.0"
+  source = "github.com/stategraph/terraform-aws-stategraph-ecs?ref=v1.0.0"
 
   # ... other required variables
 
@@ -276,7 +275,7 @@ To tune auto scaling on CPU and memory:
 
 ```hcl
 module "stategraph" {
-  source = "<stategraph-ecs-module>?ref=v1.0.0"
+  source = "github.com/stategraph/terraform-aws-stategraph-ecs?ref=v1.0.0"
 
   # ... other variables
 

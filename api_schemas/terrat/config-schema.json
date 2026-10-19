@@ -1274,7 +1274,7 @@
               "type": "object"
             },
             "visible_on": {
-              "$ref": "#/definitions/summary-visible-on"
+              "$ref": "#/definitions/plan-visible-on"
             }
           }
         },
@@ -1338,6 +1338,17 @@
         "type": "object"
       },
       "type": "array"
+    },
+    "plan-visible-on": {
+      "description": "Define when the normal plan comment is visible, in addition to the summary comment.  'change_or_failure' posts it when the plan has changes or fails.  Default is 'always'",
+      "enum": [
+        "always",
+        "change_or_failure",
+        "failure",
+        "success",
+        "never"
+      ],
+      "type": "string"
     },
     "precheck": {
       "oneOf": [

@@ -84,13 +84,14 @@ In `header` mode, the per-dirspace changes tables of the plan and apply comments
 
 | Key | Type | Description |
 | --- | --- | --- |
-| `plan.visible_on` | string | When the plan comment of each run posts: `always`, `failure`, `success`, or `never`. Default is `always`. |
+| `plan.visible_on` | string | When the plan comment of each run posts: `always`, `change_or_failure`, `failure`, `success`, or `never`. Default is `always`. |
 | `plan.status_checks.enabled` | boolean | `true` gives each dirspace of a plan its own status check, `stategraph plan: <directory> <workspace>`. Default is `true`. |
 | `apply.visible_on` | string | When the apply comment of each run posts: `always`, `failure`, `success`, or `never`. Default is `always`. |
 | `apply.status_checks.enabled` | boolean | `true` gives each dirspace of an apply its own status check, `stategraph apply: <directory> <workspace>`. Default is `true`. |
 
 - A result with gate approvals or access control denials always posts its comment, whatever the value of `visible_on`, because no other comment carries them.
 - In `header` mode, the summary header is in the plan or apply comment. A comment that `visible_on` hides also hides its header.
+- With `change_or_failure`, the plan comment posts when a plan in the run has changes or the run fails. A successful run with no changes posts no plan comment.
 
 `status_checks` covers only the per-dirspace checks. It does not change these checks:
 

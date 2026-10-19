@@ -785,6 +785,18 @@ module Notifications : sig
     [@@deriving show, yojson, eq]
   end
 
+  (** When the plan comment posts. [Change_or_failure] posts it when the plan has changes or fails.
+  *)
+  module Plan_visible_on : sig
+    type t =
+      | Always
+      | Change_or_failure
+      | Failure
+      | Success
+      | Never
+    [@@deriving show, yojson, eq]
+  end
+
   (** Whether the per-dirspace commit check of a run is created:
       ["terrateam plan: <dir> <workspace>"] and its apply counterpart. On by default. The
       ["terrateam apply"] check that branch protection uses to hold a pull request until it is
@@ -795,7 +807,7 @@ module Notifications : sig
 
   module Plan : sig
     type t = {
-      visible_on : Visible_on.t; [@default Visible_on.Always]
+      visible_on : Plan_visible_on.t; [@default Plan_visible_on.Always]
       status_checks : Status_checks.t; [@default Status_checks.make ()]
     }
     [@@deriving make, show, yojson, eq]
@@ -852,9 +864,10 @@ module Notifications : sig
       post, because they have no other surface; otherwise the run's [visible_on] setting decides.
       The summary is not consulted: [plan] and [apply] are configured on their own, so a repository
       that never turned the summary on can still hide a comment, and one that turned it on still
-      gets both comments unless it says otherwise. *)
+      gets both comments unless it says otherwise. [has_changes] is whether any plan in the run has
+      changes. *)
   val classic_comment_visible :
-    t -> run:[ `Apply | `Plan ] -> success:bool -> gates_or_denials:bool -> bool
+    t -> run:[ `Apply | `Plan ] -> success:bool -> has_changes:bool -> gates_or_denials:bool -> bool
 end
 
 module Stacks : sig

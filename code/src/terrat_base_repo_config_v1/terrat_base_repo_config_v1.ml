@@ -1153,6 +1153,17 @@ module Notifications = struct
     [@@deriving show, yojson, eq]
   end
 
+  (* [Change_or_failure] posts the plan comment when the plan has changes or fails. *)
+  module Plan_visible_on = struct
+    type t =
+      | Always
+      | Change_or_failure
+      | Failure
+      | Success
+      | Never
+    [@@deriving show, yojson, eq]
+  end
+
   (* Whether the per-dirspace commit check of a run is created: "terrateam plan: <dir> <workspace>"
      and its apply counterpart.  A repository with many dirspaces gets one check per dirspace per
      run, which is the noise this turns off.  On by default, which is the behaviour of a repository
@@ -1169,7 +1180,7 @@ module Notifications = struct
      of every repository that configures neither. *)
   module Plan = struct
     type t = {
-      visible_on : Visible_on.t; [@default Visible_on.Always]
+      visible_on : Plan_visible_on.t; [@default Plan_visible_on.Always]
       status_checks : Status_checks.t; [@default Status_checks.make ()]
     }
     [@@deriving make, show, yojson, eq]
@@ -1239,20 +1250,25 @@ module Notifications = struct
   (* Whether the normal plan or apply comment posts.  Gate results and
      access-control denials always post -- they have no other surface.
      Otherwise the run's [visible_on] setting decides, whatever the summary is
-     set to: the two are configured independently. *)
-  let classic_comment_visible t ~run ~success ~gates_or_denials =
+     set to: the two are configured independently.  [has_changes] is whether
+     any plan in the run has changes. *)
+  let classic_comment_visible t ~run ~success ~has_changes ~gates_or_denials =
     if gates_or_denials then true
     else
-      let visible_on =
-        match run with
-        | `Plan -> t.plan.Plan.visible_on
-        | `Apply -> t.apply.Apply.visible_on
-      in
-      match visible_on with
-      | Visible_on.Always -> true
-      | Visible_on.Success -> success
-      | Visible_on.Failure -> not success
-      | Visible_on.Never -> false
+      match run with
+      | `Plan -> (
+          match t.plan.Plan.visible_on with
+          | Plan_visible_on.Always -> true
+          | Plan_visible_on.Change_or_failure -> has_changes || not success
+          | Plan_visible_on.Success -> success
+          | Plan_visible_on.Failure -> not success
+          | Plan_visible_on.Never -> false)
+      | `Apply -> (
+          match t.apply.Apply.visible_on with
+          | Visible_on.Always -> true
+          | Visible_on.Success -> success
+          | Visible_on.Failure -> not success
+          | Visible_on.Never -> false)
 end
 
 module Stacks = struct
@@ -2785,6 +2801,13 @@ let of_version_1_notifications notifications =
     | Some `Success -> Notifications.Visible_on.Success
     | Some `Never -> Notifications.Visible_on.Never
   in
+  let plan_visible_on = function
+    | None | Some `Always -> Notifications.Plan_visible_on.Always
+    | Some `Change_or_failure -> Notifications.Plan_visible_on.Change_or_failure
+    | Some `Failure -> Notifications.Plan_visible_on.Failure
+    | Some `Success -> Notifications.Plan_visible_on.Success
+    | Some `Never -> Notifications.Plan_visible_on.Never
+  in
   let status_checks = function
     | None -> Notifications.Status_checks.make ()
     | Some enabled -> Notifications.Status_checks.make ~enabled ()
@@ -2793,7 +2816,7 @@ let of_version_1_notifications notifications =
     | None -> Notifications.Plan.make ()
     | Some { N.Plan.visible_on = v; status_checks = sc } ->
         Notifications.Plan.make
-          ~visible_on:(visible_on v)
+          ~visible_on:(plan_visible_on v)
           ~status_checks:
             (status_checks (CCOption.map (fun { N.Plan.Status_checks.enabled } -> enabled) sc))
           ()
@@ -3737,13 +3760,20 @@ let to_version_1_notifications notifications =
     | Notifications.Visible_on.Success -> `Success
     | Notifications.Visible_on.Never -> `Never
   in
+  let plan_visible_on_of = function
+    | Notifications.Plan_visible_on.Always -> `Always
+    | Notifications.Plan_visible_on.Change_or_failure -> `Change_or_failure
+    | Notifications.Plan_visible_on.Failure -> `Failure
+    | Notifications.Plan_visible_on.Success -> `Success
+    | Notifications.Plan_visible_on.Never -> `Never
+  in
   let plan =
     let { Notifications.Plan.visible_on; status_checks = { Notifications.Status_checks.enabled } } =
       plan
     in
     Some
       {
-        N.Plan.visible_on = Some (visible_on_of visible_on);
+        N.Plan.visible_on = Some (plan_visible_on_of visible_on);
         status_checks = Some { N.Plan.Status_checks.enabled };
       }
   in
