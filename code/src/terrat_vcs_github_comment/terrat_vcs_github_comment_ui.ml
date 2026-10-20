@@ -10,12 +10,16 @@ module Ui = struct
   (* For pull request runs, link to the PR-level runs page which lists every run
      for the pull request.  For non-pull-request targets (e.g. drift), which have
      no pull request to aggregate, fall back to the single work manifest's run. *)
-  let work_manifest_url ~brand config account pull_number work_manifest =
+  let work_manifest_url ~brand config account pull_request_ref work_manifest =
     let module Wm = Terrat_work_manifest3 in
     let url =
-      match pull_number with
-      | Some pull_number ->
-          Printf.sprintf "%s/runs/pr/%d" (base_url ~brand config account) pull_number
+      match pull_request_ref with
+      | Some (repo, pull_number) ->
+          Printf.sprintf
+            "%s/runs/pr/%s/%d"
+            (base_url ~brand config account)
+            (Uri.pct_encode ~component:`Path (Api.Repo.name repo))
+            pull_number
       | None ->
           Printf.sprintf
             "%s/runs/%s"

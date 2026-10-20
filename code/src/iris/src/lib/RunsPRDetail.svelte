@@ -8,9 +8,12 @@
   import { navigateToRuns, navigateToRun } from './utils/navigation';
   import { onMount } from 'svelte';
 
-  export let params: { installationId?: string; prNumber?: string } = {};
+  export let params: { installationId?: string; repo?: string; prNumber?: string } = {};
 
   let pullRequest: PullRequest | null = null;
+  // Set when the link names no repository and several repositories have this
+  // pull request number.
+  let candidates: PullRequest[] | null = null;
   let stacks: Stacks | null = null;
   let runs: Dirspace[] = [];
   let repoId: string | null = null; // Store repo_id for stacks API
@@ -24,6 +27,8 @@
   let runsError: string | null = null;
 
   $: prNumber = params.prNumber ? parseInt(params.prNumber) : null;
+  $: repo = params.repo ?? null;
+  $: prQuery = repo ? `repo:${repo} and pr:${prNumber}` : `pr:${prNumber}`;
 
   // Only surface the Stacks section when the pull request actually has stacks.
   // Reviewers arriving from a pull request comment want the runs; an empty
@@ -39,27 +44,43 @@
   // Dynamic back button label based on navigation context
   $: backButtonLabel = lastRunId ? 'Back to Run Details' : 'Back to Runs';
 
-  // Load PR data when installation or PR number changes
+  // Load PR data when installation, repository or PR number changes
   $: if ($selectedInstallation && prNumber) {
-    loadPullRequest();
-    loadPRRuns();
+    loadPage(repo);
   }
 
-  async function loadPullRequest(): Promise<void> {
+  function loadPage(repo: string | null): void {
+    loadPullRequest(repo);
+    if (repo) loadPRRuns();
+  }
+
+  // Pull request numbers are per repository. Without a repository in the link,
+  // a single match is opened under its repository and several are offered.
+  async function loadPullRequest(repo: string | null): Promise<void> {
     if (!$selectedInstallation || !prNumber) return;
 
     isPRLoading = true;
     prError = null;
+    candidates = null;
+    pullRequest = null;
 
     try {
-      // Get PR metadata using the PR filter
-      const response = await api.getInstallationPullRequests($selectedInstallation.id, { pr: prNumber });
+      const response = await api.getInstallationPullRequests($selectedInstallation.id, {
+        pr: prNumber,
+        repo: repo ?? undefined
+      });
+      const found = response.pull_requests;
 
-      if (response.pull_requests.length > 0) {
-        pullRequest = response.pull_requests[0];
-        // Don't load stacks yet - we need repo_id from runs first
+      if (repo && found.length > 0) {
+        pullRequest = found[0];
+      } else if (found.length === 1) {
+        window.location.replace(getPRDetailHref(found[0]));
+      } else if (found.length > 1) {
+        candidates = found;
       } else {
-        prError = `Pull request #${prNumber} not found`;
+        prError = repo
+          ? `Pull request ${repo}#${prNumber} not found`
+          : `Pull request #${prNumber} not found`;
       }
     } catch (err) {
       if (isApiError(err)) {
@@ -107,11 +128,9 @@
     runsError = null;
 
     try {
-      // Use Tag Query Language to filter runs for this PR
-      const query = `pr:${prNumber}`;
       const params = {
         tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        q: query,
+        q: prQuery,
         limit: 50
       };
 
@@ -223,7 +242,7 @@
       navigateToRun(storedRunId);
     } else {
       // Fall back to runs list with PR filter
-      navigateToRuns(`pr:${prNumber}`, $selectedInstallation?.id);
+      navigateToRuns(prQuery, $selectedInstallation?.id);
     }
   }
 
@@ -243,6 +262,11 @@
     return null;
   }
 
+  function getPRDetailHref(pr: PullRequest): string {
+    const path = `/runs/pr/${encodeURIComponent(pr.name)}/${pr.pull_number}`;
+    return $selectedInstallation ? `#/i/${$selectedInstallation.id}${path}` : `#${path}`;
+  }
+
   function getRunDetailHref(runId: string): string {
     if ($selectedInstallation) {
       return `#/i/${$selectedInstallation.id}/runs/${runId}`;
@@ -252,8 +276,7 @@
 
   onMount(() => {
     if ($selectedInstallation && prNumber) {
-      loadPullRequest();
-      loadPRRuns();
+      loadPage(repo);
     }
   });
 </script>
@@ -277,6 +300,25 @@
     <LoadingSpinner size="lg" centered={true} />
   {:else if prError}
     <ErrorMessage type="error" message={prError} />
+  {:else if candidates}
+    <Card padding="md" class="mb-6">
+      <h2 class="text-lg font-semibold text-[var(--sg-text)] mb-3">
+        Several repositories have a pull request #{prNumber}. Pick one:
+      </h2>
+      <ul class="divide-y divide-[var(--sg-border)]">
+        {#each candidates as candidate}
+          <li>
+            <a
+              href={getPRDetailHref(candidate)}
+              class="flex items-center gap-3 py-2 hover:bg-[var(--sg-bg-2)]"
+            >
+              <span class="font-mono text-sm text-[var(--sg-text)]">{candidate.owner}/{candidate.name}</span>
+              <span class="text-sm text-[var(--sg-text-dim)]">{candidate.title || 'Untitled'}</span>
+            </a>
+          </li>
+        {/each}
+      </ul>
+    </Card>
   {:else if pullRequest}
     <!-- PR Information Card -->
     <Card padding="md" class="mb-6">

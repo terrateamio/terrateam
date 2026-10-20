@@ -51,7 +51,7 @@ module Publisher_tools : sig
     view:[> `Compact ] ->
     compacted_dirspaces:Terrat_dirspace.t list ->
     summary:bool ->
-    pull_number:int option ->
+    pull_request_ref:(Api.Repo.t * int) option ->
     dirspace_run_urls:(Terrat_dirspace.t * string) list ->
     string ->
     [< `Active | `Disabled | `Expired | `Trial_ending of int64 > `Trial_ending ] ->

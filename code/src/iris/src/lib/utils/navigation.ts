@@ -118,10 +118,12 @@ export function navigateToPullRequest(prNumber: string | number, installationId?
 /**
  * Navigate to PR detail page (runs view with stacks)
  * @param prNumber - The pull request number
+ * @param repo - The repository name; without it the page asks when several repositories share the number
  * @param installationId - Optional specific installation ID
  */
-export function navigateToPRDetail(prNumber: string | number, installationId?: string): void {
-  navigateToInstallationPath(`/runs/pr/${prNumber}`, installationId);
+export function navigateToPRDetail(prNumber: string | number, repo?: string, installationId?: string): void {
+  const path = repo ? `/runs/pr/${encodeURIComponent(repo)}/${prNumber}` : `/runs/pr/${prNumber}`;
+  navigateToInstallationPath(path, installationId);
 }
 
 /**

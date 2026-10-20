@@ -613,7 +613,7 @@
                       {/if}
                     </div>
                     <button
-                      on:click={() => navigateToPRDetail(pr.prNumber)}
+                      on:click={() => navigateToPRDetail(pr.prNumber, pr.repo)}
                       class="text-sm text-[var(--sg-accent)] hover:text-[var(--sg-accent-hover)] font-medium transition-colors"
                     >
                       View Full PR →

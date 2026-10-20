@@ -35,4 +35,5 @@ left join latest_github_work_manifest as lgwm
     on gpr.repository = lgwm.repository and gpr.pull_number = lgwm.pull_number
 where (lgwm.rn is null or lgwm.rn = 1) and gir.installation_id = $installation_id
       and ($pull_number is null or gpr.pull_number = $pull_number)
+      and ($repo is null or gir.name = $repo)
       and gui.user_id = $user

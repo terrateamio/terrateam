@@ -1061,6 +1061,7 @@ module Make (S : S with type Account_id.t = int) = struct
           /% Var.uuid "user"
           /% Var.bigint "installation_id"
           /% Var.(option (bigint "pull_number"))
+          /% Var.(option (text "repo"))
           /% Var.option (Var.bigint "prev_pull_number"))
     end
 
@@ -1073,6 +1074,7 @@ module Make (S : S with type Account_id.t = int) = struct
       type query = {
         user : Uuidm.t;
         pull_request : int option;
+        repo : string option;
         storage : Terrat_storage.t;
         installation_id : int;
         limit : int;
@@ -1133,6 +1135,7 @@ module Make (S : S with type Account_id.t = int) = struct
               query.user
               (CCInt64.of_int query.installation_id)
               (CCOption.map CCInt64.of_int query.pull_request)
+              query.repo
               pull_number)
 
       let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
@@ -1170,7 +1173,7 @@ module Make (S : S with type Account_id.t = int) = struct
 
     module Paginate = Brtl_ep_paginate.Make (Page)
 
-    let get _config storage installation_id pr_opt page limit =
+    let get _config storage installation_id pr_opt repo page limit =
       Brtl_ep.run_result_json ~f:(fun ctx ->
           let open Abbs_fc.Infix_result_monad in
           Terrat_session.with_session ctx
@@ -1180,7 +1183,14 @@ module Make (S : S with type Account_id.t = int) = struct
           let open Abb.Future.Infix_monad in
           let query =
             Page.
-              { user = Terrat_user.id user; pull_request = pr_opt; storage; installation_id; limit }
+              {
+                user = Terrat_user.id user;
+                pull_request = pr_opt;
+                repo;
+                storage;
+                installation_id;
+                limit;
+              }
           in
           Paginate.run ?page ~page_param:"page" query ctx >>= fun ctx -> Abbs_fc.return_ok ctx)
   end

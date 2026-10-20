@@ -62,7 +62,7 @@ module Publisher_tools : sig
     compacted_dirspaces:Terrat_dirspace.t list ->
     summary:bool ->
     summary_unified:bool ->
-    pull_number:int option ->
+    pull_request_ref:(Api.Repo.t * int) option ->
     dirspace_run_urls:(Terrat_dirspace.t * string) list ->
     dirspace_applied:(Terrat_dirspace.t * bool) list ->
     string ->

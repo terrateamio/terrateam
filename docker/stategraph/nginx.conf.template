@@ -108,6 +108,9 @@ http {
         # as a lookup hint only; MQL tenant scoping is the security boundary.
         # Regex locations win over the prefix locations below, and the terrat
         # route prefixes (/api/...) never overlap /i/.
+        location ~ ^/i/([0-9]+)/runs/pr/([A-Za-z0-9._-]+)/([0-9]+)$ {
+            return 302 /pull-requests/detail/?installation=$1&repo=$2&pr=$3;
+        }
         location ~ ^/i/([0-9]+)/runs/pr/([0-9]+)$ {
             return 302 /pull-requests/detail/?installation=$1&pr=$2;
         }
