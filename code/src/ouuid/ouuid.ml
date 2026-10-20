@@ -1,5 +1,8 @@
 type t = Uuidm.t
 
+let show u = Uuidm.to_string u
+let pp = Uuidm.pp
+let equal = Uuidm.equal
 let to_yojson u = `String (Uuidm.to_string u)
 
 let of_yojson = function

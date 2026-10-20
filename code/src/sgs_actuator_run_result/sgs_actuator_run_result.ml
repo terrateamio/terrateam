@@ -12,6 +12,10 @@ module Reason_plan = Sgs_actuator_run_result_reason_plan
 module Reason_preview_decode = Sgs_actuator_run_result_reason_preview_decode
 module Reason_preview_fetch = Sgs_actuator_run_result_reason_preview_fetch
 module Reason_read = Sgs_actuator_run_result_reason_read
+
+module Reason_remote_state_address_unresolved =
+  Sgs_actuator_run_result_reason_remote_state_address_unresolved
+
 module Reason_results_task_failed = Sgs_actuator_run_result_reason_results_task_failed
 module Reason_show_json = Sgs_actuator_run_result_reason_show_json
 module Reason_state_schema_behind = Sgs_actuator_run_result_reason_state_schema_behind
