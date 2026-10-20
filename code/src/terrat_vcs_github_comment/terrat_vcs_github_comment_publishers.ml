@@ -383,7 +383,7 @@ module Publisher_tools = struct
       ~compacted_dirspaces
       ~summary
       ~summary_unified
-      ~pull_number
+      ~pull_request_ref
       ~dirspace_run_urls
       ~dirspace_applied
       request_id
@@ -498,7 +498,7 @@ module Publisher_tools = struct
                   ~brand
                   config
                   work_manifest.Wm.account
-                  pull_number
+                  pull_request_ref
                   work_manifest);
              CCOption.map_or
                ~default:[]

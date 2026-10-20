@@ -362,7 +362,11 @@ module S = struct
       el.work_manifest_id
 
   let console_url t =
-    Printf.sprintf "%s/runs/pr/%Ld" (Ui.base_url ~brand:t.brand t.config t.account) t.pull_number
+    Printf.sprintf
+      "%s/runs/pr/%s/%Ld"
+      (Ui.base_url ~brand:t.brand t.config t.account)
+      (Uri.pct_encode ~component:`Path t.repo_name)
+      t.pull_number
 
   let sum f els =
     CCList.fold_left (fun acc el -> Int64.add acc (CCOption.get_or ~default:0L (f el))) 0L els

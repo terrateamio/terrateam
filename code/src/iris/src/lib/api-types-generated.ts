@@ -1709,6 +1709,7 @@ export interface operations {
             query?: {
                 page?: string[];
                 pr?: number;
+                repo?: string;
             };
             header?: never;
             path: {

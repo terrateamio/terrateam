@@ -272,7 +272,8 @@ module S = struct
   (* Link to the PR-level runs page so the comment (which aggregates every work
      manifest for the pull request) points at all of them, not just the last one
      to post. *)
-  let pull_number t = Some (Api.Pull_request.id t.pull_request)
+  let pull_request_ref t =
+    Some (Api.Pull_request.repo t.pull_request, Api.Pull_request.id t.pull_request)
 
   (* Per-dirspace deep links to the specific work manifest run that produced each
      dirspace's output. *)
@@ -303,7 +304,7 @@ module S = struct
     let gates = t.result.R2.gates in
     let summary = summary_enabled t in
     let summary_unified = summary_unified_enabled t in
-    let pull_number = pull_number t in
+    let pull_request_ref = pull_request_ref t in
     let dirspace_run_urls = dirspace_run_urls t els in
     let dirspace_applied = dirspace_applied els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
@@ -325,7 +326,7 @@ module S = struct
         ~compacted_dirspaces
         ~summary
         ~summary_unified
-        ~pull_number
+        ~pull_request_ref
         ~dirspace_run_urls
         ~dirspace_applied
         t.request_id
@@ -358,7 +359,7 @@ module S = struct
             ~compacted_dirspaces:(CCList.map (fun { dirspace; _ } -> dirspace) els)
             ~summary
             ~summary_unified
-            ~pull_number
+            ~pull_request_ref
             ~dirspace_run_urls
             ~dirspace_applied
             t.request_id
@@ -388,7 +389,7 @@ module S = struct
                 ~compacted_dirspaces:(CCList.map (fun { dirspace; _ } -> dirspace) els)
                 ~summary
                 ~summary_unified
-                ~pull_number
+                ~pull_request_ref
                 ~dirspace_run_urls
                 ~dirspace_applied
                 t.request_id
@@ -412,7 +413,7 @@ module S = struct
     let gates = t.result.R2.gates in
     let summary = summary_enabled t in
     let summary_unified = summary_unified_enabled t in
-    let pull_number = pull_number t in
+    let pull_request_ref = pull_request_ref t in
     let dirspace_run_urls = dirspace_run_urls t els in
     let dirspace_applied = dirspace_applied els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
@@ -434,7 +435,7 @@ module S = struct
         ~compacted_dirspaces
         ~summary
         ~summary_unified
-        ~pull_number
+        ~pull_request_ref
         ~dirspace_run_urls
         ~dirspace_applied
         t.request_id

@@ -440,6 +440,7 @@ module List_pull_requests = struct
       installation_id : string;
       page : Page.t option; [@default None]
       pr : int option; [@default None]
+      repo : string option; [@default None]
     }
     [@@deriving make, show, eq]
   end
@@ -481,7 +482,11 @@ module List_pull_requests = struct
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("page", Var (params.page, Option (Array String))); ("pr", Var (params.pr, Option Int)) ])
+         [
+           ("page", Var (params.page, Option (Array String)));
+           ("pr", Var (params.pr, Option Int));
+           ("repo", Var (params.repo, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get

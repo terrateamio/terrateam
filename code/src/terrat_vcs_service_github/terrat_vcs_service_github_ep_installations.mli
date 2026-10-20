@@ -54,6 +54,7 @@ module Make (_ : S with type Account_id.t = int) : sig
       Terrat_storage.t ->
       int ->
       int option ->
+      string option ->
       int64 Brtl_ep_paginate.Param.t option ->
       int ->
       Brtl_rtng.Handler.t

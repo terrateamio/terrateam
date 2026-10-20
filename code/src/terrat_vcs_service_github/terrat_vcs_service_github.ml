@@ -172,6 +172,7 @@ struct
           /% Path.int
           / "pull-requests"
           /? Query.(option (int "pr"))
+          /? Query.(option (string "repo"))
           /? Query.(
                option
                  (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
@@ -239,6 +240,7 @@ struct
           /% Path.int
           / "pull-requests"
           /? Query.(option (int "pr"))
+          /? Query.(option (string "repo"))
           /? Query.(
                option
                  (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))

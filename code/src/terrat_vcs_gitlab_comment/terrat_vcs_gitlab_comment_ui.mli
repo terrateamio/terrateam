@@ -3,7 +3,7 @@ module Ui : sig
     brand:Terrat_brand.t ->
     Terrat_vcs_api_gitlab.Config.t ->
     Terrat_vcs_api_gitlab.Account.t ->
-    int option ->
+    (Terrat_vcs_api_gitlab.Repo.t * int) option ->
     ('a, Uuidm.t, 'b, 'c, 'd, 'e, 'f, 'g) Terrat_work_manifest3.t ->
     Uri.t option
 end

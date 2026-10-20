@@ -710,7 +710,7 @@ export class ValidatedApiClient {
   // Pull Requests
   async getInstallationPullRequests(
     installationId: string,
-    params?: { page?: string[]; pr?: number },
+    params?: { page?: string[]; pr?: number; repo?: string },
     provider?: VCSProvider
   ): Promise<{ pull_requests: PullRequest[]; nextCursor?: string; hasMore: boolean; linkHeaders?: LinkHeader }> {
     const providerPath = this.getProviderPath(provider);
@@ -719,6 +719,7 @@ export class ValidatedApiClient {
     if (params) {
       const queryParams = new URLSearchParams();
       if (params.pr) queryParams.set('pr', params.pr.toString());
+      if (params.repo) queryParams.set('repo', params.repo);
 
       // Handle page array parameter for cursor-based pagination
       if (params.page && params.page.length > 0) {

@@ -861,6 +861,7 @@
       <!-- Pull Request Information -->
       {#if getPullRequestInfo(run.kind).pullNumber}
         {@const prInfo = getPullRequestInfo(run.kind)}
+        {@const prPath = `/runs/pr/${encodeURIComponent(run.repo)}/${prInfo.pullNumber}`}
         <div class="border-t border-[var(--sg-border)] pt-6 mb-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-[var(--sg-accent)]">Pull Request Details</h3>
@@ -871,8 +872,8 @@
                   sessionStorage.setItem('lastRunId', params.id);
                 }
                 const prUrl = $selectedInstallation
-                  ? `#/i/${$selectedInstallation.id}/runs/pr/${prInfo.pullNumber}`
-                  : `#/runs/pr/${prInfo.pullNumber}`;
+                  ? `#/i/${$selectedInstallation.id}${prPath}`
+                  : `#${prPath}`;
                 window.location.hash = prUrl;
               }}
               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-[var(--sg-accent)] bg-[var(--sg-accent-bg)] border border-[var(--sg-accent)] rounded-md hover:bg-[var(--sg-accent-bg)] transition-colors"

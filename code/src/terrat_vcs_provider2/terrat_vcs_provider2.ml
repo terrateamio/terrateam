@@ -1345,7 +1345,7 @@ module type S = sig
       brand:Terrat_brand.t ->
       Api.Config.t ->
       Api.Account.t ->
-      int option ->
+      (Api.Repo.t * int) option ->
       ('a, 'b) Terrat_work_manifest3.Existing.t ->
       Uri.t option
   end
