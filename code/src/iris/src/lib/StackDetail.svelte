@@ -268,7 +268,13 @@
         </Button>
       </div>
 
-      <StackTree {stacks} loading={isLoadingStacks} {error} />
+      <StackTree
+        {stacks}
+        loading={isLoadingStacks}
+        {error}
+        prNumber={parseInt(params.prNumber, 10)}
+        repo={runs[0]?.repo ?? null}
+      />
     </Card>
 
     <!-- Runs History -->

@@ -127,8 +127,10 @@
     }
   }
   
+  // The expanded view shows the full content, rendered as this block renders it.
   function handleExpand() {
-    dispatch('expand', { content, title });
+    const html = displayText === content ? displayHtml : renderHtml(content, format, highlight);
+    dispatch('expand', { content, title, html, markdown: format.kind === 'markdown', htmlClass: hljsClass });
   }
   
   function handleDownload() {

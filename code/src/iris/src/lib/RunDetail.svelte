@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import type { WorkManifest } from './types';
   import type { OutputItem, ResourceSummary } from './types/stepOutput';
   // Auth handled by PageLayout
@@ -12,6 +12,9 @@
   import Card from './components/ui/Card.svelte';
   import StepOutput from './components/ui/StepOutput.svelte';
   import DirspaceHeader from './components/ui/DirspaceHeader.svelte';
+  import RunSummaryTable from './components/ui/RunSummaryTable.svelte';
+  import { dirspaceAnchor, runSummary } from './utils/runSummary';
+  import { dirspaceOfQuery } from './utils/planLink';
   import { getWebBaseUrl } from './server-config';
 
   export let params: { id: string; installationId?: string } = { id: '' };
@@ -53,7 +56,11 @@
   let isLoadingOutputs: boolean = false;
   let outputsError: string | null = null;
   let expandedDirspaces: Set<string> = new Set();
-  let activeOutputTab: 'all' | 'raw' | 'cost' | 'failed' = 'all';
+  type OutputTab = 'summary' | 'all' | 'raw' | 'cost' | 'failed';
+  let activeOutputTab: OutputTab | null = null;
+  // Until a tab is picked, a run of several dirspaces opens on Summary and a
+  // run of one on All Steps.
+  $: shownTab = activeOutputTab ?? ((run?.dirspaces?.length ?? 0) > 1 ? 'summary' : 'all');
   const web_base_url = getWebBaseUrl($currentVCSProvider, $serverConfig);
 
   // Auth check is handled by PageLayout
@@ -518,6 +525,26 @@
     return `${dir}:${workspace}`;
   }
 
+  $: summary = run ? runSummary(run.dirspaces ?? [], allOutputs) : null;
+
+  $: live = run !== null && (run.state === 'queued' || run.state === 'running');
+
+  // The dirspace named by ?dir=&workspace=, opened once the outputs load.
+  let focusDirspace: { dir: string; workspace: string } | null = null;
+  $: focusDirspace = params.id ? dirspaceOfQuery(window.location.hash.split('?')[1]) : null;
+  $: if (focusDirspace && run && !isLoadingOutputs) {
+    const row = focusDirspace;
+    focusDirspace = null;
+    openDirspaceSteps(row);
+  }
+
+  async function openDirspaceSteps(row: { dir: string; workspace: string }): Promise<void> {
+    expandedDirspaces = new Set(expandedDirspaces).add(getDirspaceKey(row.dir, row.workspace));
+    activeOutputTab = 'all';
+    await tick();
+    document.getElementById(dirspaceAnchor(row.dir, row.workspace))?.scrollIntoView({ block: 'start' });
+  }
+
   // Collapsed-header resource counts, read from the dirspace's plan step in
   // the unfiltered `allOutputs` list (the same source `runHadNoChanges`
   // reads): `shouldShowStep` filters a successful plan step out of `outputs`.
@@ -656,10 +683,17 @@
   let showOutputModal = false;
   let modalOutputContent = '';
   let modalOutputTitle = '';
+  // Rendered HTML of the content; empty shows it as plain text.
+  let modalOutputHtml = '';
+  let modalOutputMarkdown = false;
+  let modalOutputHtmlClass = '';
 
-  function openOutputModal(content: string, title: string) {
+  function openOutputModal(content: string, title: string, html = '', markdown = false, htmlClass = '') {
     modalOutputContent = content;
     modalOutputTitle = title;
+    modalOutputHtml = html;
+    modalOutputMarkdown = markdown;
+    modalOutputHtmlClass = htmlClass;
     showOutputModal = true;
     // Prevent body scroll when modal is open
     document.body.classList.add('modal-open');
@@ -669,6 +703,7 @@
     showOutputModal = false;
     modalOutputContent = '';
     modalOutputTitle = '';
+    modalOutputHtml = '';
     // Restore body scroll
     document.body.classList.remove('modal-open');
   }
@@ -974,30 +1009,36 @@
 
         <!-- Output Filter Tabs -->
         <div class="flex flex-wrap gap-1 bg-[var(--sg-bg-2)] rounded-lg p-1">
+          <button
+            on:click={() => activeOutputTab = 'summary'}
+            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {shownTab === 'summary' ? 'bg-[var(--sg-bg-1)] text-[var(--sg-accent)] shadow-sm' : 'text-[var(--sg-text-dim)] hover:text-[var(--sg-text)]'}"
+          >
+            Summary
+          </button>
           <button 
             on:click={() => activeOutputTab = 'all'}
-            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {activeOutputTab === 'all' ? 'bg-[var(--sg-bg-1)] text-[var(--sg-accent)] shadow-sm' : 'text-[var(--sg-text-dim)] hover:text-[var(--sg-text)]'}"
+            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {shownTab === 'all' ? 'bg-[var(--sg-bg-1)] text-[var(--sg-accent)] shadow-sm' : 'text-[var(--sg-text-dim)] hover:text-[var(--sg-text)]'}"
           >
             <span class="hidden sm:inline">All Steps</span>
             <span class="sm:hidden">All</span>
           </button>
           <button 
             on:click={() => activeOutputTab = 'raw'}
-            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {activeOutputTab === 'raw' ? 'bg-[var(--sg-bg-1)] text-[var(--sg-accent)] shadow-sm' : 'text-[var(--sg-text-dim)] hover:text-[var(--sg-text)]'}"
+            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {shownTab === 'raw' ? 'bg-[var(--sg-bg-1)] text-[var(--sg-accent)] shadow-sm' : 'text-[var(--sg-text-dim)] hover:text-[var(--sg-text)]'}"
           >
             <span class="hidden sm:inline">🔧 Raw Steps</span>
             <span class="sm:hidden">🔧 Raw</span>
           </button>
           <button 
             on:click={() => activeOutputTab = 'cost'}
-            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {activeOutputTab === 'cost' ? 'bg-[var(--sg-bg-1)] text-[var(--sg-accent)] shadow-sm' : 'text-[var(--sg-text-dim)] hover:text-[var(--sg-text)]'}"
+            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {shownTab === 'cost' ? 'bg-[var(--sg-bg-1)] text-[var(--sg-accent)] shadow-sm' : 'text-[var(--sg-text-dim)] hover:text-[var(--sg-text)]'}"
           >
             💰 Cost <span class="hidden sm:inline">({costEstimation.length})</span>
             <span class="sm:hidden text-[10px]">({costEstimation.length})</span>
           </button>
           <button
             on:click={() => activeOutputTab = 'failed'}
-            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {activeOutputTab === 'failed' ? 'bg-[var(--sg-bg-1)] text-[var(--sg-accent)] shadow-sm' : 'text-[var(--sg-text-dim)] hover:text-[var(--sg-text)]'}"
+            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {shownTab === 'failed' ? 'bg-[var(--sg-bg-1)] text-[var(--sg-accent)] shadow-sm' : 'text-[var(--sg-text-dim)] hover:text-[var(--sg-text)]'}"
           >
             ❌ Failed
           </button>
@@ -1005,7 +1046,7 @@
       </div>
 
       <!-- Plan Highlighting Toggle -->
-      <div class="mb-4 flex items-center gap-2 text-sm">
+      <div class="mb-4 items-center gap-2 text-sm {shownTab === 'summary' ? 'hidden' : 'flex'}">
         <input
           type="checkbox"
           id="enable-highlighting"
@@ -1028,8 +1069,19 @@
         <ErrorMessage type="error" message={outputsError} />
       {:else}
         
+        <!-- Summary Tab -->
+        {#if shownTab === 'summary'}
+          {#if summary}
+            <RunSummaryTable
+              {summary}
+              isApply={run.run_type === 'apply'}
+              {live}
+              onOpen={openDirspaceSteps}
+            />
+          {/if}
+
         <!-- Cost Estimation Tab -->
-        {#if activeOutputTab === 'cost'}
+        {:else if shownTab === 'cost'}
           {#if costEstimation.length === 0}
             <div class="text-center py-8 text-[var(--sg-text-dim)]">
               <div class="text-4xl mb-2">💰</div>
@@ -1186,7 +1238,7 @@
           {/if}
         
         <!-- All Steps Tab -->
-        {:else if activeOutputTab === 'all'}
+        {:else if shownTab === 'all'}
           <!-- Dirspace-organized outputs -->
           <div class="space-y-4">
             {#each run.dirspaces as dirspace}
@@ -1198,7 +1250,7 @@
                 return matchesDirspace && shouldShow;
               })}
               
-              <div class="border border-[var(--sg-border)] rounded-lg">
+              <div id={dirspaceAnchor(dirspace.dir, dirspace.workspace)} class="border border-[var(--sg-border)] rounded-lg scroll-mt-4">
                 <DirspaceHeader
                   dir={dirspace.dir}
                   workspace={dirspace.workspace}
@@ -1246,7 +1298,7 @@
                               repoName={run?.repo || ''}
                               prNumber={typeof run?.kind === 'object' && run.kind?.pull_number ? run.kind.pull_number : ''}
                               runType={run?.run_type || ''}
-                              on:expand={(e) => openOutputModal(e.detail.content, e.detail.title)}
+                              on:expand={(e) => openOutputModal(e.detail.content, e.detail.title, e.detail.html, e.detail.markdown, e.detail.htmlClass)}
                               on:loadFull={(e) => loadFullOutput(e.detail)}
                             />
                           </div>
@@ -1260,7 +1312,7 @@
           </div>
         
         <!-- Raw Steps Tab (All steps without visibility filtering) -->
-        {:else if activeOutputTab === 'raw'}
+        {:else if shownTab === 'raw'}
           <!-- Dirspace-organized outputs (unfiltered) -->
           <div class="space-y-4">
             {#each run.dirspaces as dirspace}
@@ -1324,7 +1376,7 @@
                               prNumber={typeof run?.kind === 'object' && run.kind?.pull_number ? run.kind.pull_number : ''}
                               runType={run?.run_type || ''}
                               debugVisibility={true}
-                              on:expand={(e) => openOutputModal(e.detail.content, e.detail.title)}
+                              on:expand={(e) => openOutputModal(e.detail.content, e.detail.title, e.detail.html, e.detail.markdown, e.detail.htmlClass)}
                               on:loadFull={(e) => loadFullOutput(e.detail)}
                             />
                           </div>
@@ -1338,7 +1390,7 @@
           </div>
         
         <!-- Failed Steps Tab -->
-        {:else if activeOutputTab === 'failed'}
+        {:else if shownTab === 'failed'}
           {#if failedOutputs.length === 0}
             <div class="text-center py-8 text-[var(--sg-text-dim)]">
               <div class="text-4xl mb-2">✅</div>
@@ -1401,7 +1453,7 @@
                               prNumber={typeof run?.kind === 'object' && run.kind?.pull_number ? run.kind.pull_number : ''}
                               runType={run?.run_type || ''}
                               variant="error"
-                              on:expand={(e) => openOutputModal(e.detail.content, e.detail.title)}
+                              on:expand={(e) => openOutputModal(e.detail.content, e.detail.title, e.detail.html, e.detail.markdown, e.detail.htmlClass)}
                               on:loadFull={(e) => loadFullOutput(e.detail)}
                             />
                           </div>
@@ -1499,7 +1551,13 @@
 
         <!-- Modal Content -->
         <div class="flex-1 overflow-hidden">
-          <pre class="h-full w-full bg-[var(--sg-bg-0)] text-[var(--sg-text)] p-3 sm:p-4 overflow-auto text-xs sm:text-sm font-mono whitespace-pre-wrap break-words">{modalOutputContent}</pre>
+          {#if modalOutputHtml && modalOutputMarkdown}
+            <div class="output-markdown h-full w-full bg-[var(--sg-bg-code)] text-[var(--sg-text-code)] p-3 sm:p-4 overflow-auto text-sm">{@html modalOutputHtml}</div>
+          {:else if modalOutputHtml}
+            <pre class="{modalOutputHtmlClass} h-full w-full bg-[var(--sg-bg-code)] p-3 sm:p-4 overflow-auto text-xs sm:text-sm font-mono whitespace-pre-wrap break-words"><code>{@html modalOutputHtml}</code></pre>
+          {:else}
+            <pre class="h-full w-full bg-[var(--sg-bg-0)] text-[var(--sg-text)] p-3 sm:p-4 overflow-auto text-xs sm:text-sm font-mono whitespace-pre-wrap break-words">{modalOutputContent}</pre>
+          {/if}
         </div>
 
         <!-- Modal Footer -->

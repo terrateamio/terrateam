@@ -77,12 +77,53 @@ generate-api-types:
 # OCaml counterpart of the frontend's `npm run check-api-types`: regenerate
 # every dune-managed codegen target and fail if the committed output (or a
 # normalised input schema) drifts.
-check-api-types: generate-api-types
-	cd $(ROOT) && git diff --exit-code -- api_schemas $$(awk '{ print $$2 }' $(CODEGEN_MANIFEST)) || { \
+#
+# The list of the generated directories comes from the codegen manifest, so
+# [paths] is read from it AFTER the generation, which builds the manifest: on a
+# clean _build the manifest does not exist yet, and reading it first would
+# leave [paths] with the schemas alone, silently checking nothing but them
+# while still exiting 0.
+#
+# In a jj workspace (including a colocated one), which is preferred, the
+# comparison runs against the working copy's own state before the generation:
+# the commit id of @ is captured before and after the generation -- `jj log`
+# snapshots the working copy first, so the id changes exactly when the
+# generation changed a file -- and the two commits are diffed over the
+# generated paths.  An empty diff means the generated files are in sync.  The
+# id of @ is captured before ANY dune call: a dune build re-runs the promote
+# rules and rewrites the generated files in place, which would erase the
+# committed state the snapshot has to see.  A `git diff` in a colocated
+# checkout would compare the worktree with the index jj exported last, which
+# can miss a drift another tool staged.  A plain git clone falls back to
+# `git diff --exit-code`: worktree against index, run after the generation, so
+# a git branch needs no commit ids and reads [paths] after the generation too.
+check-api-types:
+	@if command -v jj >/dev/null 2>&1 && (cd $(ROOT) && jj root) >/dev/null 2>&1; then \
+	  before=$$(cd $(ROOT) && jj log -r @ --no-graph -T commit_id 2>/dev/null) || { \
+	    echo 'ERROR: cannot read the commit id of the jj working copy.'; exit 1; }; \
+	  $(MAKE) generate-api-types || exit 1; \
+	  paths="api_schemas $$(awk '{ print $$2 }' $(CODEGEN_MANIFEST))"; \
+	  after=$$(cd $(ROOT) && jj log -r @ --no-graph -T commit_id); \
+	  if [ "$$before" = "$$after" ]; then \
+	    status=0; \
+	  elif drift=$$(cd $(ROOT) && jj diff --from $$before --to $$after -s -- $$paths); then \
+	    if [ -n "$$drift" ]; then printf '%s\n' "$$drift"; status=1; else status=0; fi; \
+	  else \
+	    status=1; \
+	  fi; \
+	elif (cd $(ROOT) && git rev-parse --is-inside-work-tree) >/dev/null 2>&1; then \
+	  $(MAKE) generate-api-types || exit 1; \
+	  paths="api_schemas $$(awk '{ print $$2 }' $(CODEGEN_MANIFEST))"; \
+	  (cd $(ROOT) && git diff --exit-code -- $$paths); status=$$?; \
+	else \
+	  echo 'ERROR: cannot compare generated files: not a git work tree and not a jj repo.'; \
+	  status=1; \
+	fi; \
+	if [ $$status -ne 0 ]; then \
 	  echo 'ERROR: generated files are out of sync with the schemas in api_schemas/.'; \
 	  echo 'Run `make -C code check-api-types` and commit the updated api_schemas/ + generated dirs.'; \
 	  exit 1; \
-	}
+	fi
 
 # Fails when a migration file exists in a migrations/ directory without a
 # matching registration in the package's migration module (terrat_migrations.ml,

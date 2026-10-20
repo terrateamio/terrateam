@@ -478,6 +478,8 @@
           {stacks}
           loading={isStacksLoading}
           error={stacksError}
+          {prNumber}
+          repo={runs[0]?.repo ?? null}
         />
       </div>
     {/if}
