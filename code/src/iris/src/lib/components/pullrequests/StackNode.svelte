@@ -7,6 +7,8 @@
   export let level: number = 0;
   export let forceExpanded: boolean = true;
   export let showWorkspaces: boolean = false;
+  // Opens a workspace's latest plan run; false when it has none.
+  export let openPlan: ((dir: string, workspace: string) => Promise<boolean>) | null = null;
 
   let expanded: boolean = true;
 
@@ -107,9 +109,32 @@
   $: borderWidthClass = getBorderClass(level);
   $: borderColorClass = getBorderColorClass(stack.state);
   $: workspaceStateCounts = getWorkspaceStateCounts(stack);
+  $: collapsible =
+    (isStackOuter(stack) && stack.stacks.length > 0) ||
+    (isStackInner(stack) && stack.dirspaces.length > 0 && showWorkspaces);
 
   function toggleExpanded() {
     expanded = !expanded;
+  }
+
+  let opening: string | null = null;
+  let noPlan: Set<string> = new Set();
+  let planError: Set<string> = new Set();
+
+  async function onRowClick(dir: string, workspace: string): Promise<void> {
+    if (!openPlan || opening) return;
+    const key = `${dir}:${workspace}`;
+    opening = key;
+    planError.delete(key);
+    planError = planError;
+    try {
+      if (!(await openPlan(dir, workspace))) noPlan = new Set(noPlan).add(key);
+    } catch (err) {
+      console.error('Error opening plan:', err);
+      planError = new Set(planError).add(key);
+    } finally {
+      opening = null;
+    }
   }
 </script>
 
@@ -119,7 +144,7 @@
   aria-label="Stack {stack.name}"
 >
   <!-- Stack header with name and state -->
-  {#if isStackOuter(stack) && stack.stacks.length > 0}
+  {#if collapsible}
     <!-- Expandable stack - entire header is clickable -->
     <button
       on:click={toggleExpanded}
@@ -160,7 +185,7 @@
       <StackStateIndicator state={stack.state} size="md" />
     </button>
   {:else}
-    <!-- Non-expandable stack (leaf node) - not clickable -->
+    <!-- Non-expandable stack - not clickable -->
     <div class="flex items-center justify-between mb-3">
       <div class="flex flex-col gap-1">
         <h3 class="text-lg font-semibold text-[var(--sg-text)] {level > 0 ? 'ml-4' : ''}">
@@ -186,7 +211,7 @@
     {#if isStackOuter(stack) && stack.stacks.length > 0}
       <div class="mt-4 space-y-4">
         {#each stack.stacks as innerStack}
-          <svelte:self stack={innerStack} level={level + 1} {forceExpanded} {showWorkspaces} />
+          <svelte:self stack={innerStack} level={level + 1} {forceExpanded} {showWorkspaces} {openPlan} />
         {/each}
       </div>
     {/if}
@@ -195,24 +220,48 @@
     {#if isStackInner(stack) && stack.dirspaces.length > 0 && showWorkspaces}
       <div class="mt-3 space-y-2 {level > 0 ? 'ml-4' : ''}">
         {#each stack.dirspaces as { dirspace, state }}
-          <div
-            class="flex items-center gap-3 p-2 rounded-md bg-[var(--sg-bg-0)] text-sm"
-          >
-            <div class="flex-1 font-mono text-xs text-[var(--sg-text-muted)]">
-              {dirspace.dir}
+          {@const key = `${dirspace.dir}:${dirspace.workspace}`}
+          {#if openPlan && !noPlan.has(key)}
+            <button
+              type="button"
+              on:click={() => onRowClick(dirspace.dir, dirspace.workspace)}
+              disabled={opening !== null}
+              aria-label="Open the latest plan for {dirspace.dir} workspace {dirspace.workspace}"
+              class="w-full flex items-center gap-3 p-2 rounded-md bg-[var(--sg-bg-0)] text-sm text-left hover:bg-[var(--sg-bg-2)] focus:outline-none focus:ring-2 focus:ring-[var(--sg-accent)] transition-colors cursor-pointer disabled:cursor-wait"
+            >
+              {@render dirspaceRow(dirspace, state, key)}
+            </button>
+          {:else}
+            <div class="flex items-center gap-3 p-2 rounded-md bg-[var(--sg-bg-0)] text-sm">
+              {@render dirspaceRow(dirspace, state, key)}
             </div>
-            <div class="text-xs font-medium text-[var(--sg-text-dim)]">
-              {dirspace.workspace}
-            </div>
-            <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-[var(--sg-bg-1)] border border-[var(--sg-border)]">
-              <div class="w-2 h-2 rounded-full {getStateDotColor(state)}"></div>
-              <span class="text-xs font-medium text-[var(--sg-text-muted)]">
-                {state.replace(/_/g, ' ')}
-              </span>
-            </div>
-          </div>
+          {/if}
         {/each}
       </div>
     {/if}
   {/if}
 </div>
+
+{#snippet dirspaceRow(dirspace: { dir: string; workspace: string }, state: string, key: string)}
+  <div class="flex-1 font-mono text-xs text-[var(--sg-text-muted)]">
+    {dirspace.dir}
+  </div>
+  {#if opening === key}
+    <span class="text-xs text-[var(--sg-text-dim)]">Opening plan…</span>
+  {:else if planError.has(key)}
+    <span class="text-xs text-[var(--sg-error)]">Could not load plan</span>
+  {:else if noPlan.has(key)}
+    <span class="text-xs text-[var(--sg-text-dim)]">No plan run</span>
+  {:else if openPlan}
+    <span class="text-xs font-medium text-[var(--sg-accent)]">View plan</span>
+  {/if}
+  <div class="text-xs font-medium text-[var(--sg-text-dim)]">
+    {dirspace.workspace}
+  </div>
+  <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-[var(--sg-bg-1)] border border-[var(--sg-border)]">
+    <div class="w-2 h-2 rounded-full {getStateDotColor(state)}"></div>
+    <span class="text-xs font-medium text-[var(--sg-text-muted)]">
+      {state.replace(/_/g, ' ')}
+    </span>
+  </div>
+{/snippet}

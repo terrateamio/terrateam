@@ -3,10 +3,17 @@
   import StackNode from './StackNode.svelte';
   import { EmptyState, LoadingSpinner } from '../index';
   import { aggregateStacks } from '../../utils/stackAggregation';
+  import { latestPlanQuery, runDirspacePath } from '../../utils/planLink';
+  import { navigateToInstallationPath } from '../../utils/navigation';
+  import { api } from '../../api';
+  import { selectedInstallation } from '../../stores';
 
   export let stacks: Stacks | null = null;
   export let loading: boolean = false;
   export let error: string | null = null;
+  // With both set, each workspace row opens its latest plan run.
+  export let prNumber: number | null = null;
+  export let repo: string | null = null;
 
   let allExpanded: boolean = true;
   let showWorkspaces: boolean = false;
@@ -64,6 +71,22 @@
 
     return counts;
   }
+
+  // Resolves to false when the dirspace has no plan run on this pull request.
+  async function openPlan(dir: string, workspace: string): Promise<boolean> {
+    if (!$selectedInstallation || prNumber === null || !repo) return false;
+    const response = await api.getInstallationDirspaces($selectedInstallation.id, {
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      q: latestPlanQuery(prNumber, repo, dir, workspace),
+      limit: 1,
+    });
+    const run = response.dirspaces[0];
+    if (!run) return false;
+    navigateToInstallationPath(runDirspacePath(run.id, dir, workspace));
+    return true;
+  }
+
+  $: planOpener = Number.isInteger(prNumber) && repo ? openPlan : null;
 
   function toggleExpandAll() {
     allExpanded = !allExpanded;
@@ -268,7 +291,7 @@
   {#if filteredStacks && filteredStacks.stacks && filteredStacks.stacks.length > 0}
     <div class="space-y-6" role="list" aria-label="Stack list">
       {#each filteredStacks.stacks as stack}
-        <StackNode {stack} level={0} forceExpanded={allExpanded} {showWorkspaces} />
+        <StackNode {stack} level={0} forceExpanded={allExpanded} {showWorkspaces} openPlan={planOpener} />
       {/each}
     </div>
   {:else if searchQuery}
