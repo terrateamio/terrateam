@@ -22,6 +22,8 @@ type t =
   | Reason_tx_conflict of Sgs_actuator_run_result_reason_tx_conflict.t
   | Reason_tx_invalid_state of Sgs_actuator_run_result_reason_tx_invalid_state.t
   | Reason_state_schema_behind of Sgs_actuator_run_result_reason_state_schema_behind.t
+  | Reason_remote_state_address_unresolved of
+      Sgs_actuator_run_result_reason_remote_state_address_unresolved.t
 [@@deriving show, eq]
 
 let of_yojson =
@@ -102,6 +104,10 @@ let of_yojson =
          map
            (fun v -> Reason_state_schema_behind v)
            (Sgs_actuator_run_result_reason_state_schema_behind.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Reason_remote_state_address_unresolved v)
+           (Sgs_actuator_run_result_reason_remote_state_address_unresolved.of_yojson v));
      ])
 
 let to_yojson = function
@@ -129,3 +135,5 @@ let to_yojson = function
   | Reason_tx_conflict v -> Sgs_actuator_run_result_reason_tx_conflict.to_yojson v
   | Reason_tx_invalid_state v -> Sgs_actuator_run_result_reason_tx_invalid_state.to_yojson v
   | Reason_state_schema_behind v -> Sgs_actuator_run_result_reason_state_schema_behind.to_yojson v
+  | Reason_remote_state_address_unresolved v ->
+      Sgs_actuator_run_result_reason_remote_state_address_unresolved.to_yojson v
