@@ -17,6 +17,7 @@ This page lists common Stategraph errors and their solutions: sign-in, the `stat
 | `401 Unauthorized` | Check the session, or see [401 Unauthorized](#http-error-401-unauthorized) |
 | `redirect_uri_mismatch` | See [OAuth redirect errors](#redirect_uri_mismatch) |
 | `command not found` (tf plan/apply) | See [command not found](#command-not-found-running-plan-or-apply) |
+| `remote_state_address_unresolved` | See [Remote state address does not resolve](#remote-state-address-does-not-resolve) |
 | `TX_CONFLICT` (409) | See [Transaction conflict](#transaction-conflict-tx_conflict-http-409) |
 | `503` on `/costs/calculate` | See [Cost analysis disabled](#cost-analysis-disabled-or-returns-503) |
 | Unknown-command reply on a pull request | See [Unknown-command reply](#pull-request-comment-gets-an-unknown-command-reply) |
@@ -177,6 +178,24 @@ An input variable with the name "..." has not been declared.
 - Run `stategraph diagnostics run <dir>` with the `--var`, `--var-file`, and `--workspace` of your plan, to trace how Stategraph evaluates the module. See [Diagnostics](/docs/cli/diagnostics).
 - Make sure that the evaluated module declares the variable or `local`, and that its source module resolves as expected.
 - Upgrade to the latest CLI, which has several evaluation fixes for this error.
+
+### Remote state address does not resolve {#remote-state-address-does-not-resolve}
+
+**Symptoms**: `stategraph tf plan` fails and does not run Terraform or OpenTofu. The address of a `terraform_remote_state` data source reads a value that Stategraph cannot know at plan time. No plan is produced.
+
+**Error message**
+
+```text
+Error: the remote state address of data source data.terraform_remote_state.network names var.network_state_id, and it does not resolve at plan time:
+	variable does not resolve at plan time
+```
+
+**Solution**:
+
+- Give the address a value that is known at plan time: a tfvar, the `default` of the variable, or the argument of the module call. See [Variables in the address](/docs/infrastructure-as-a-database/multi-state#variables-in-the-address).
+- Do not read a resource, a data source, or an output in the address. Stategraph evaluates the address from configuration values only.
+- Do not use `count.index`, `each.key`, or `path.*` in the address. Use a tfvar instead.
+- Run `stategraph diagnostics run <dir>` with the same `--var` and `--var-file` values to trace the evaluation. See [Diagnostics](/docs/cli/diagnostics).
 
 ## Console Issues
 
