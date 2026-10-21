@@ -281,11 +281,12 @@ module S = struct
     CCList.filter_map
       (fun el ->
         match
-          Ui.run_url
+          Ui.dirspace_run_url
             ~brand:t.brand
             t.config
             t.work_manifest.Terrat_work_manifest3.account
             el.work_manifest_id
+            el.dirspace
         with
         | Some uri -> Some (el.dirspace, Uri.to_string uri)
         | None -> None)

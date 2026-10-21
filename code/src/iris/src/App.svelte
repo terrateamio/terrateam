@@ -203,9 +203,12 @@
         console.warn('Could not store installation ID in session storage:', e);
       }
       
-      // If there's a deeper path (like /runs/xxx), preserve it in the hash
+      // If there's a deeper path (like /runs/xxx), preserve it and its query
+      // (?dir=&workspace= opens one dirspace of a run) in the hash
       if (restOfPath && restOfPath !== '/') {
-        window.location.replace(`${window.location.origin}/#/i/${installationId}${restOfPath}`);
+        window.location.replace(
+          `${window.location.origin}/#/i/${installationId}${restOfPath}${window.location.search}`
+        );
       } else {
         // Just /i/{id} or /i/{id}/ - redirect to root and let auto-redirect handle it
         window.location.replace(`${window.location.origin}/#/`);

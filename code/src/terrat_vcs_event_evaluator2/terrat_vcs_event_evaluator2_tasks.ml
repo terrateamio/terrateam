@@ -96,12 +96,16 @@ struct
   let time_it s l f =
     Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
 
-  let repo_config_cache_key account repo ref_ repo_config =
+  let repo_config_cache_key account repo ~dest_branch_name ~branch_name ref_ repo_config =
     S.Api.Account.to_string account
     ^ "."
     ^ S.Api.Repo.to_string repo
     ^ "."
     ^ S.Api.Ref.to_string ref_
+    ^ ":"
+    ^ S.Api.Ref.to_string dest_branch_name
+    ^ ":"
+    ^ S.Api.Ref.to_string branch_name
     ^ ":"
     ^ Tasks_base.repo_config_hash repo_config
 
@@ -1529,7 +1533,13 @@ struct
           >>= fun branch_ref ->
           let cache_key =
             ( "cache2.derived_repo_config_empty_index",
-              repo_config_cache_key account repo branch_ref repo_config_raw )
+              repo_config_cache_key
+                account
+                repo
+                ~dest_branch_name
+                ~branch_name
+                branch_ref
+                repo_config_raw )
           in
           Cache.derived_repo_config
             ~cache_key
@@ -1563,7 +1573,13 @@ struct
           >>= fun branch_ref ->
           let cache_key =
             ( "cache2.derived_repo_config",
-              repo_config_cache_key account repo branch_ref repo_config_raw )
+              repo_config_cache_key
+                account
+                repo
+                ~dest_branch_name
+                ~branch_name
+                branch_ref
+                repo_config_raw )
           in
           Cache.derived_repo_config
             ~cache_key
@@ -1691,7 +1707,13 @@ struct
           >>= fun dest_branch_ref ->
           let cache_key =
             ( "cache2.repo_config_empty_index",
-              repo_config_cache_key account repo dest_branch_ref repo_config_raw )
+              repo_config_cache_key
+                account
+                repo
+                ~dest_branch_name
+                ~branch_name
+                dest_branch_ref
+                repo_config_raw )
           in
           Cache.derived_repo_config
             ~cache_key
@@ -1724,8 +1746,14 @@ struct
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
           let cache_key =
-            ( "cache2.repo_config_empty_index",
-              repo_config_cache_key account repo dest_branch_ref repo_config_raw )
+            ( "cache2.derived_repo_config_dest_branch",
+              repo_config_cache_key
+                account
+                repo
+                ~dest_branch_name
+                ~branch_name
+                dest_branch_ref
+                repo_config_raw )
           in
           Cache.derived_repo_config
             ~cache_key

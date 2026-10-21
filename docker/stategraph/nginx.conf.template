@@ -107,7 +107,9 @@ http {
         # existing comment links keep working. The installation id rides along
         # as a lookup hint only; MQL tenant scoping is the security boundary.
         # Regex locations win over the prefix locations below, and the terrat
-        # route prefixes (/api/...) never overlap /i/.
+        # route prefixes (/api/...) never overlap /i/.  A run link keeps its
+        # query string (rewrite appends it), so ?dir=&workspace= opens that
+        # dirspace of the run.
         location ~ ^/i/([0-9]+)/runs/pr/([A-Za-z0-9._-]+)/([0-9]+)$ {
             return 302 /pull-requests/detail/?installation=$1&repo=$2&pr=$3;
         }
@@ -115,7 +117,7 @@ http {
             return 302 /pull-requests/detail/?installation=$1&pr=$2;
         }
         location ~ ^/i/([0-9]+)/runs/([0-9a-fA-F-]+)$ {
-            return 302 /runs/wm/?installation=$1&id=$2;
+            rewrite ^/i/([0-9]+)/runs/([0-9a-fA-F-]+)$ /runs/wm/?installation=$1&id=$2 redirect;
         }
         location ~ ^/i/ {
             return 302 /;
