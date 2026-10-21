@@ -2225,6 +2225,19 @@ module Build = struct
   let is_not e1 e2 = M.Is_not (e1, e2)
   let in_ e es = M.In (e, es)
   let in_query e q = M.In_query (e, q)
+  let field table column = M.Field_select (id table, ident column)
+
+  let func name args =
+    M.Func
+      {
+        M.qualifier = None;
+        name = ident name;
+        distinct = false;
+        args = M.Func_exprs (CCList.map (fun e -> M.Arg e) args);
+        agg_order_by = None;
+        filter = None;
+        over = None;
+      }
 
   let count_star =
     M.Func
