@@ -245,6 +245,32 @@
       ],
       "type": "object"
     },
+    "reason-remote-state-address-unresolved": {
+      "additionalProperties": false,
+      "description": "A [terraform_remote_state] data source address names a variable or a local that does not resolve at plan time, so the run was refused before terraform ran. \"block\" is the address of the data source block; \"variable\" is the address that did not resolve; \"detail\" says why.",
+      "properties": {
+        "block": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "kind": {
+          "const": "remote_state_address_unresolved",
+          "type": "string"
+        },
+        "variable": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "block",
+        "variable",
+        "detail"
+      ],
+      "type": "object"
+    },
     "reason-results-task-failed": {
       "additionalProperties": false,
       "description": "The server-side results-delivery task did not complete. \"state\" is the task's terminal state.",
@@ -505,6 +531,9 @@
         },
         {
           "$ref": "#/definitions/reason-state-schema-behind"
+        },
+        {
+          "$ref": "#/definitions/reason-remote-state-address-unresolved"
         }
       ]
     },

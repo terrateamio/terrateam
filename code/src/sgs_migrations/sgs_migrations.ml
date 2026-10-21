@@ -566,6 +566,10 @@ let migrations =
     (* RFD 1008 Phase 3: the fileset hint, on each read of a member of a folder and in the
        [filesets] channel of the [hcl_hints] row of the instance. *)
     ("add-fileset-hints", run_sql [%blob "./migrations/2026-09-30-add-fileset-hints.sql"]);
+    (* RFD 2716: the map of remote state address to outputs refs on a body row of [tf_module_hcl].
+       The body row carries the map and never a resolved state id; see the comment in the file. *)
+    ( "add-tf-module-hcl-remote-tf-state-refs",
+      run_sql [%blob "./migrations/2026-10-14-add-tf-module-hcl-remote-tf-state-refs.sql"] );
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations

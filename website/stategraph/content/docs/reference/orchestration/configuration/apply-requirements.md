@@ -127,6 +127,12 @@ On GitLab, `require_completed_reviews` always requires no open review request, b
 
 For scoped examples, see the [CODEOWNERS enforcement guide](/docs/orchestration/configuration/codeowners).
 
+## Apply Check on Pull Requests With No Changes
+
+A pull request that changes nothing that Orchestration manages has nothing to plan or apply. By default, Orchestration still creates the `stategraph apply` commit status on it, as completed, so the pull request can merge when branch protection requires the check.
+
+With `create_completed_apply_check_on_noop: false`, Orchestration creates no `stategraph apply` status on that pull request, neither pending nor completed. If branch protection requires `stategraph apply`, the pull request cannot merge. Keep the default when the check is required.
+
 ## Apply Requirements on GitLab
 
 On GitLab, Orchestration checks each requirement against the merge request:

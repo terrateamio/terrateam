@@ -1,4 +1,4 @@
-type t = Uuidm.t [@@deriving yojson]
+type t = Uuidm.t [@@deriving show, eq, yojson]
 
 val v4 : unit -> Uuidm.t
 val to_string : ?upper:bool -> Uuidm.t -> string
