@@ -113,7 +113,9 @@ latest_runs as (
         row_number() over (partition by path, workspace, is_apply
                            order by created_at desc) as rn_any,
         row_number() over (partition by path, workspace, is_apply, on_head
-                           order by created_at desc) as rn_on_head
+                           order by created_at desc) as rn_on_head,
+        row_number() over (partition by path, workspace
+                           order by created_at desc) as rn_latest
     from run_results
 ),
 latest_plans as (
@@ -135,6 +137,12 @@ latest_applies_any as (
     select path, workspace, success, work_manifest
     from latest_runs
     where is_apply and rn_any = 1
+),
+-- The newest plan or apply of each dirspace on any commit of the pull request.
+latest_any as (
+    select path, workspace, work_manifest
+    from latest_runs
+    where rn_latest = 1
 ),
 -- A dirspace with a work manifest in flight, and whether one of those is an
 -- apply: an apply in flight is a different state to the reader than a plan in
@@ -174,6 +182,7 @@ elements as (
         lpa.work_manifest as any_plan_work_manifest,
         laa.success as any_apply_success,
         laa.work_manifest as any_apply_work_manifest,
+        lra.work_manifest as latest_work_manifest,
         (ad.path is not null) as active,
         coalesce(ad.apply, false) as active_apply,
         (ab.path is not null) as aborted,
@@ -199,6 +208,8 @@ elements as (
         on lpa.path = cd.path and lpa.workspace = cd.workspace
     left join latest_applies_any as laa
         on laa.path = cd.path and laa.workspace = cd.workspace
+    left join latest_any as lra
+        on lra.path = cd.path and lra.workspace = cd.workspace
     left join active_dirspaces as ad
         on ad.path = cd.path and ad.workspace = cd.workspace
     left join aborted_dirspaces as ab
@@ -221,6 +232,7 @@ chosen as (
               else e.any_apply_success end) as apply_success,
         (case when e.summary_state is null then e.head_apply_work_manifest
               else e.any_apply_work_manifest end) as apply_work_manifest,
+        e.latest_work_manifest,
         e.active,
         e.active_apply,
         e.aborted,
@@ -247,6 +259,7 @@ select
     coalesce(po.payload->>'plan', po.payload->>'text') as plan_output,
     c.apply_success,
     c.apply_work_manifest,
+    c.latest_work_manifest,
     c.active,
     c.active_apply,
     c.aborted,

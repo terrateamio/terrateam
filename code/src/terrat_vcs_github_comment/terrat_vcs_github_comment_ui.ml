@@ -36,4 +36,10 @@ module Ui = struct
             "%s/runs/%s"
             (base_url ~brand config account)
             (Uuidm.to_string work_manifest_id)))
+
+  (* Link to a work manifest's run detail, opened on the output of one dirspace. *)
+  let dirspace_run_url ~brand config account work_manifest_id { Terrat_dirspace.dir; workspace } =
+    CCOption.map
+      (fun uri -> Uri.add_query_params' uri [ ("dir", dir); ("workspace", workspace) ])
+      (run_url ~brand config account work_manifest_id)
 end

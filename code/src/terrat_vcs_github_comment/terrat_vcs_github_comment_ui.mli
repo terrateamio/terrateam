@@ -20,4 +20,13 @@ module Ui : sig
     Terrat_vcs_api_github.Account.t ->
     Uuidm.t ->
     Uri.t option
+
+  (** {!run_url} opened on the output of one dirspace of the run. *)
+  val dirspace_run_url :
+    brand:Terrat_brand.t ->
+    Terrat_vcs_api_github.Config.t ->
+    Terrat_vcs_api_github.Account.t ->
+    Uuidm.t ->
+    Terrat_dirspace.t ->
+    Uri.t option
 end

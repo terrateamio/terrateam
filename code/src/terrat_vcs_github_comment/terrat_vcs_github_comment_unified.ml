@@ -110,6 +110,9 @@ module Sql = struct
       (* apply_work_manifest *)
       Ret.(option uuid)
       //
+      (* latest_work_manifest *)
+      Ret.(option uuid)
+      //
       (* active *)
       Ret.boolean
       //
@@ -302,6 +305,7 @@ module S = struct
           plan_output
           apply_success
           apply_work_manifest
+          latest_work_manifest
           active
           active_apply
           aborted
@@ -317,7 +321,12 @@ module S = struct
           status =
             status_of_row ~plan_success ~apply_success ~active ~active_apply ~aborted ~summary_state;
           updated;
-          work_manifest_id = CCOption.or_ ~else_:plan_work_manifest apply_work_manifest;
+          (* A dirspace with no run that counts for the head links to its newest run. *)
+          work_manifest_id =
+            CCOption.(
+              apply_work_manifest
+              |> or_ ~else_:plan_work_manifest
+              |> or_ ~else_:latest_work_manifest);
         })
       t.work_manifest_id
     >>= function
@@ -358,7 +367,7 @@ module S = struct
       (fun work_manifest_id ->
         Uri.to_string
         @@ CCOption.get_exn_or "run_url"
-        @@ Ui.run_url ~brand:t.brand t.config t.account work_manifest_id)
+        @@ Ui.dirspace_run_url ~brand:t.brand t.config t.account work_manifest_id el.dirspace)
       el.work_manifest_id
 
   let console_url t =

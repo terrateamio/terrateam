@@ -1,7 +1,6 @@
 -- The commit the current work manifest ran against.  Carried forward output
--- produced against a different commit describes code that is no longer in the
--- pull request, and any plan in it cannot be applied (an apply against it fails
--- the valid-plan check with "missing plans"), so it is not rendered.
+-- produced against a different commit is rendered only while its run still
+-- counts for this commit, or when it records an apply that already happened.
 with current_commit as (
   select
     wm.sha,
@@ -57,6 +56,24 @@ applied_dirspaces as (
         and gwmr.success
         and (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at)
   group by gwmr.path, gwmr.workspace
+),
+-- The dirspaces whose runs on another commit still count for the commit of the
+-- current work manifest, as the intra-PR hash rules stored it (RFD 2356): a
+-- push that changes no file of a dirspace keeps its plan and its apply.  A
+-- stale or failed state keeps no run.  [work_manifest] is the run that decided
+-- the state, or null when an evaluation kept the newest runs of the dirspace.
+kept_dirspaces as (
+  select
+    s.path as dir,
+    s.workspace,
+    s.work_manifest
+  from github_pull_request_dirspace_summaries s
+  inner join current_pull_request cpr on (
+        cpr.repository = s.repository
+    and cpr.pull_number = s.pull_number
+  )
+  inner join current_commit cc on cc.sha = s.sha
+  where s.state in ('planned', 'applied')
 )
 select
     wm.id,
@@ -93,14 +110,21 @@ left join applied_dirspaces ad on (
         gwmc.dir = ad.dir
     and gwmc.workspace = ad.workspace
 )
+left join kept_dirspaces kd on (
+        gwmc.dir = kd.dir
+    and gwmc.workspace = kd.workspace
+    and (kd.work_manifest is null or kd.work_manifest = wm.id)
+)
 cross join current_commit cc
 where
     gwmc.comment_id = $comment_id
     -- Output from the current commit is always shown.  Output from an earlier
-    -- commit is only kept when it records an apply that already happened, which
-    -- renders with the "Already applied" marker rather than as pending work.
+    -- commit is kept while its run still counts for the current commit, or when
+    -- it records an apply that already happened, which renders with the
+    -- "Already applied" marker rather than as pending work.
     and (
         (wm.sha = cc.sha and wm.base_sha = cc.base_sha)
+        or kd.dir is not null
         or coalesce(ad.applied_at > wm.created_at, false)
     )
 order by wso.idx
