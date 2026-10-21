@@ -202,5 +202,21 @@
     make the kind of a module: only the client knows which module is local. The re-import this
     counter forces writes each scope. The other changes of Phase 3 to the stored shape (the fileset
     hints, the identity of a remote call) take this version too, because the phase does not ship in
-    parts. *)
+    parts.
+
+    Version 16: the [from] address of a [removed {}] block ([removed_from_fq_address] on its
+    [hcl_set] log row). Ingest reads it from the block's own id through
+    {!Sg_node.Directive.from_index_free}, and [insert_reifier_state_subgraph.sql] seeds the state
+    row the block forgets from it, as [delete_state_prune_orphan_hcl_blast.sql] prunes it. Before
+    this, both statements cut the address out of the block's [fq_address] text.
+
+    No migration can write the field. It is on the log rows of a transaction, and the server
+    rewrites no log row it holds. Without the bump, a transaction that an older server ingested and
+    this server plans carries no state row for its [removed] block, and tofu does not forget the
+    resource, with no error. The bump makes {!Sgs_dwf_preview.state_schema_step} refuse such a plan
+    while its states are behind, and the re-import writes the field.
+
+    A window stays open, by decision: after the re-import of a state, an open transaction that an
+    older server ingested passes the gate, because the gate reads the version of the state and not
+    the version of the transaction. *)
 val version : int
