@@ -290,6 +290,10 @@
         },
         "remote_state": {},
         "remote_tf_state_refs": {},
+        "removed_from_fq_address": {
+          "description": "The from address of a removed {} block, read by Sg_node.Directive.from_index_free from the block's own id: a TERRAFORM address with its instance keys dropped, which is the shape resources.fq_address holds. insert_reifier_state_subgraph.sql joins it to carry the state row the block forgets, and the mark reads it back through the same reader from the same id, so the statement and the mark cannot disagree about which rows the slice holds. Server-derived at ingestion; absent on a block whose from is not an address, on a block of a module body, and on rows written before this field existed.",
+          "type": "string"
+        },
         "tf_module": {
           "$ref": "#/definitions/tf_module_key"
         },

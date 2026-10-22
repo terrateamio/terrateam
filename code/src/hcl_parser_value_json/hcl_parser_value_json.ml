@@ -233,8 +233,6 @@ let rec json_to_expr (json : Yojson.Safe.t) =
       in
       convert_pairs [] pairs
   | `Intlit s -> Error (`Invalid_expr_type_err ("intlit: " ^ s))
-  | `Tuple _ -> Error (`Invalid_expr_type_err "tuple")
-  | `Variant _ -> Error (`Invalid_expr_type_err "variant")
 
 (* Convert a block body (list of AST values) to JSON *)
 let rec body_to_json body =
@@ -490,7 +488,7 @@ module Safe = struct
     | `Float f -> Ok (Expr.Float f)
     | `Bool b -> Ok (Expr.Bool b)
     | `Null -> Ok Expr.Null
-    | `Assoc _ | `List _ | `Intlit _ | `Tuple _ | `Variant _ ->
+    | `Assoc _ | `List _ | `Intlit _ ->
         Error
           (`Safe_unexpected_type_err
              ("primitive or interpolation string", Yojson.Safe.to_string json))

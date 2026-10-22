@@ -582,9 +582,55 @@ let printer_reparse_tests =
       not (CCList.mem ~eq:CCString.equal f printer_reparse_divergent_fixtures))
   |> CCList.map (fun fname -> make_printer_reparse_test (Filename.concat files_dir fname))
 
+(* A provider address that a state carries is valid HCL. This pins that claim against hclsyntax and
+   not only against our own parser: the reifier decodes such an address as a traversal to find a
+   provider's source and alias, so both backends must accept it, must build the same traversal, and
+   must print it back as it came. *)
+let provider_address_is_valid_hcl =
+  Oth.test ~name:"provider_address_is_valid_hcl" (fun _ ->
+      let module E = Hcl_parser_value.Expr in
+      let module A = Hcl_parser_value.Attr in
+      let pp = Hcl_parser_value.Expr.pp in
+      let eq = Hcl_parser_value.Expr.equal in
+      let check addr expected =
+        let menhir = Oth.Assert.ok_show ~show:Hcl_ast.show_err (Hcl_ast.of_expr_string addr) in
+        let shim =
+          Oth.Assert.ok_show ~show:Hcl_ast.show_err (Hcl_ast.Tests.Shim.of_expr_string addr)
+        in
+        Oth.Assert.Eq.string ~expected:addr ~actual:(Hcl_ast.To_string.expr menhir);
+        Oth.Assert.Eq.string ~expected:addr ~actual:(Hcl_ast.To_string.expr shim);
+        Oth.Assert.eq ~eq ~pp expected menhir;
+        Oth.Assert.eq ~eq ~pp expected shim
+      in
+      check
+        {|provider["registry.terraform.io/hashicorp/tls"]|}
+        (E.Idx (E.Id "provider", E.String "registry.terraform.io/hashicorp/tls"));
+      check
+        {|provider["registry.terraform.io/hashicorp/tls"].secondary|}
+        (E.Attr
+           ( E.Idx (E.Id "provider", E.String "registry.terraform.io/hashicorp/tls"),
+             A.A_string "secondary" ));
+      check
+        {|provider["registry.opentofu.org/hashicorp/random"].b|}
+        (E.Attr
+           ( E.Idx (E.Id "provider", E.String "registry.opentofu.org/hashicorp/random"),
+             A.A_string "b" ));
+      (* An address neither backend reads as a traversal at all.  [provider_identity_of_address]
+         parses the address and answers [None] for it, so the provider keeps its bare place at the
+         bundle root; pin that the text fails BOTH backends, so that branch is a parse failure and
+         not a shape this test forgot to cover. *)
+      let check_err addr =
+        let pp fmt _ = Format.pp_print_string fmt "Expected error but got Ok" in
+        ignore (Oth.Assert.error_pp ~pp (Hcl_ast.of_expr_string addr));
+        ignore (Oth.Assert.error_pp ~pp (Hcl_ast.Tests.Shim.of_expr_string addr))
+      in
+      check_err {|provider["unterminated|};
+      check_err {|provider[|})
+
 let test =
   Oth.parallel
     (parse_tests
+    @ [ provider_address_is_valid_hcl ]
     @ tofu_fmt_parity_tests
     @ normalize_tests
     @ template_doc_examples

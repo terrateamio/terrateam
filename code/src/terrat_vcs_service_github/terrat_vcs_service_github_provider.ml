@@ -11,9 +11,6 @@ let not_a_bad_chunk_size = 500
 let replace_nul_byte = CCString.replace ~which:`All ~sub:"\x00" ~by:"\\0"
 
 let rec replace_nul_byte_json = function
-  | `Tuple l -> `Tuple (CCList.map replace_nul_byte_json l)
-  | `Variant (k, None) -> `Variant (replace_nul_byte k, None)
-  | `Variant (k, Some v) -> `Variant (replace_nul_byte k, Some (replace_nul_byte_json v))
   | `List l -> `List (CCList.map replace_nul_byte_json l)
   | `Assoc assoc ->
       `Assoc (CCList.map (fun (k, v) -> (replace_nul_byte k, replace_nul_byte_json v)) assoc)

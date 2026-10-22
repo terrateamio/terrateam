@@ -519,20 +519,6 @@ let test_fail_intlit_expr =
     ~expected_err:(`Invalid_expr_type_err "")
     (`Assoc [ ("value", `Intlit "12345678901234567890") ])
 
-(* Test: Invalid expr type - Tuple (Yojson variant, not List) is not a valid expression *)
-let test_fail_tuple_expr =
-  failure_test
-    ~name:"fail_tuple_expr"
-    ~expected_err:(`Invalid_expr_type_err "")
-    (`Assoc [ ("value", `Tuple [ `String "a"; `String "b" ]) ])
-
-(* Test: Invalid expr type - Variant is not a valid expression *)
-let test_fail_variant_expr =
-  failure_test
-    ~name:"fail_variant_expr"
-    ~expected_err:(`Invalid_expr_type_err "")
-    (`Assoc [ ("value", `Variant ("Tag", Some (`String "payload"))) ])
-
 (* Test: Invalid expr type - Intlit inside a list triggers Invalid_expr_type_err *)
 let test_fail_intlit_in_list =
   failure_test
@@ -1107,8 +1093,6 @@ let test =
       test_fail_top_level_null;
       test_fail_top_level_bool;
       test_fail_intlit_expr;
-      test_fail_tuple_expr;
-      test_fail_variant_expr;
       test_fail_intlit_in_list;
       test_fail_nested_intlit;
       (* Repeated blocks *)

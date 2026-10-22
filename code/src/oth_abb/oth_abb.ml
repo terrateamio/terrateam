@@ -89,6 +89,9 @@ module Make (Abb : Abb_intf.S) = struct
 
     let create_state () =
       let slots = default_slots () in
+      (* The bodies stay pinned to the scheduler domain.  Unpinned, an e2e test sometimes never
+         resumed after its [Abb_curl] response came back, and the run hung; the integration suite
+         measured no faster unpinned (3m20s against 3m24s at OTH_PARALLEL=8). *)
       Logs.info (fun m -> m "bounded_executor : create : slots=%d" slots);
       Bounded_exec.create ~slots ()
 
@@ -103,7 +106,17 @@ module Make (Abb : Abb_intf.S) = struct
     let parallel thunks = Fut_comb.all (CCList.map (fun f -> f ()) thunks)
 
     let run_suite f =
-      match Abb.Scheduler.run_with_state f with
+      (* One knob for both test binaries, at the single [run_with_state] call.  The pool runs
+         [Abb.Thread.run] payloads -- [Pgsql_io] decodes a large backend message there, so a
+         database-backed suite reaches the pool on every big result -- and it drains the callbacks
+         of an unpinned task the suite itself makes.  It does NOT set how many tests run at once:
+         the test bodies are pinned (see [create_state]) and [OTH_PARALLEL] sizes the bounded
+         executor.  Same shape as [TERRAT_SCHEDULER_THREAD_POOL_SIZE] in terrat_cli.ml:220-221.
+         Left unset, the scheduler keeps its own default of [max 2 (recommended domains)]. *)
+      let thread_pool_size =
+        CCOption.flat_map CCInt.of_string (Sys.getenv_opt "OTH_SCHEDULER_THREAD_POOL_SIZE")
+      in
+      match Abb.Scheduler.run_with_state ?thread_pool_size f with
       | `Det () -> ()
       | `Aborted ->
           Logs.err (fun m -> m "test suite aborted");

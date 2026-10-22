@@ -76,7 +76,10 @@
     <div class="mt-3 space-y-3">
       {#if diff}
         <div>
-          <div class="text-xs text-[var(--sg-text-dim)] mb-2">Diff <span class="font-mono">(engine.diff)</span>:</div>
+          <div class="text-xs text-[var(--sg-text-dim)] mb-2">
+            <span class="font-medium text-[var(--sg-text)]">Planned changes</span>
+            Read from the saved plan file.
+          </div>
           <SafeOutput
             content={diff}
             format={DIFF_FORMAT}
@@ -97,12 +100,10 @@
         <div>
           <div class="text-xs {isError ? 'text-[var(--sg-error)]' : 'text-[var(--sg-text-dim)]'} mb-2">
             {#if diff}
-              Plan output <span class="font-mono">(engine.plan)</span>:
+              <span class="font-medium text-[var(--sg-text)]">Plan command output</span>
+              Full log of the plan command. Data source reads, refresh, warnings, then the same plan.
             {:else}
               {isError ? 'Error Output:' : 'Output:'}
-            {/if}
-            {#if payload?._wasLoadedOnDemand}
-              <span class="text-[var(--sg-success)] font-medium">(loaded on demand)</span>
             {/if}
           </div>
           <SafeOutput
