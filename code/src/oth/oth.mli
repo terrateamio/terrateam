@@ -235,7 +235,11 @@ module type S = sig
 
     (** [setup] receives the value produced by the run-level [setup] given to {!run_phases}. On
         [Error msg] the run stops (remaining phases never start) and the process exits 1; [teardown]
-        runs after the phase's tests complete, whether or not any test failed. *)
+        runs after the phase's tests complete, whether or not any test failed.
+
+        [teardown] does NOT run when [setup] fails: it takes the value [setup] makes, and a failed
+        [setup] makes none. A [setup] that takes a resource must therefore release that resource on
+        its own failure path. *)
     val make :
       name:string ->
       setup:('g -> ('a, string) result m) ->
@@ -245,15 +249,28 @@ module type S = sig
   end
 
   (** A group is a phase that runs concurrently with the other groups of a run, rather than after
-      them: every group's setup, tests and teardown overlap. Use it when the groups' lifecycles are
-      independent -- each boots its own server on its own port, say -- so that one group's tests can
-      fill the slots another group's tail leaves idle.
+      them: the groups' setups overlap, and then their tests and teardowns do. Use it when the
+      groups' lifecycles are independent -- each boots its own server on its own port, say -- so
+      that one group's tests can fill the slots another group's tail leaves idle.
+
+      The tests of the groups start once every setup has finished, and they enter the executor in
+      list order. The order of the list is thus the order in which the groups' tests take slots,
+      whichever setup finishes first. A group whose serial chain must start before the bulk is
+      placed first.
 
       Same lifecycle as {!Phase}; only {!run_groups} treats it differently. Groups share the one
       bounded executor, so this changes which tests are eligible to run at a given moment, not how
-      many run at once. *)
+      many run at once.
+
+      A group whose setup fails does not tear down, as in {!Phase} — but here the other groups go on
+      to the end of the run, so a resource that the failed setup took stays for the whole run. A
+      group setup that takes a resource must release it itself when it fails.
+
+      [t] is {!Phase.t}. One list of groups is therefore acceptable to either {!run_phases} or
+      {!run_groups}, which lets a suite choose between the two evaluators without building its
+      groups twice. *)
   module Group : sig
-    type 'g t
+    type 'g t = 'g Phase.t
 
     val make :
       name:string ->
@@ -326,7 +343,9 @@ module type S = sig
       from every group aggregate into the single TAP/summary output.
 
       A group whose setup fails cannot stop its siblings, which are already running, so every group
-      finishes and the failures are reported together; the run then exits 1.
+      finishes and the failures are reported together; the run then exits 1. That group's [teardown]
+      does not run — see {!Group} — thus its [setup] must release what it took before it reports the
+      failure.
 
       [after] is a serial tail: those groups run one at a time, in list order, once every group has
       finished, and the run-level [teardown] waits for them too. It is how a group whose tests touch

@@ -1887,8 +1887,7 @@ let mk_page_value page col =
   | Some (`String s) -> Ok (Mql_ast.String s)
   | Some (`Float fl) -> Ok (Mql_ast.Float fl)
   | Some (`Int i) -> Ok (Mql_ast.Int i)
-  | Some ((`Tuple _ | `Bool _ | `Intlit _ | `Variant _ | `Assoc _ | `List _) as v) ->
-      Error (`Page_invalid_type_err v)
+  | Some ((`Bool _ | `Intlit _ | `Assoc _ | `List _) as v) -> Error (`Page_invalid_type_err v)
 
 (* Keyset (lexicographic) pagination predicate over the whole ORDER BY tuple.
 

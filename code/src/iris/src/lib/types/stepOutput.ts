@@ -50,7 +50,6 @@ export interface StepOutputPayload {
   // Lite mode properties
   _isLiteMode?: boolean;
   _originalStep?: string;
-  _wasLoadedOnDemand?: boolean;
   _loadTimestamp?: number;
   _loadError?: boolean;
 }

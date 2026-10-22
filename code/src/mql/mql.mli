@@ -96,6 +96,12 @@ module Build : sig
   (** [in_query e q] builds [e IN (q)] where [q] is a subquery. *)
   val in_query : Mql_ast.expr -> Mql_ast.t -> Mql_ast.expr
 
+  (** [field table column] builds [table.column]. *)
+  val field : string -> string -> Mql_ast.expr
+
+  (** [func name args] builds the call [name(args)]. *)
+  val func : string -> Mql_ast.expr list -> Mql_ast.expr
+
   (** The [count] aggregate over [*]. *)
   val count_star : Mql_ast.expr
 
