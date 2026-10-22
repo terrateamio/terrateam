@@ -262,7 +262,15 @@ struct
           time)
       (fun () -> S.Db.store_pull_request ~request_id:(Builder.log_id s) db pull_request)
 
-  let query_conflicting_work_manifests s db ~job_id ~changed_dirspaces context dirspaces op =
+  let query_conflicting_work_manifests
+      s
+      db
+      ~job_id
+      ~start_timeout
+      ~changed_dirspaces
+      context
+      dirspaces
+      op =
     time_it
       s
       (fun m log_id time ->
@@ -276,6 +284,7 @@ struct
         S.Db.query_conflicting_work_manifests_in_repo_for_context
           ~request_id:(Builder.log_id s)
           ~job_id
+          ~start_timeout
           ~changed_dirspaces
           db
           context
@@ -1174,11 +1183,14 @@ struct
               (fun dc -> dc.Terrat_change_match3.Dirspace_config.dirspace)
               (CCList.flatten all_matches)
           in
+          fetch Keys.work_manifest_start_timeout
+          >>= fun start_timeout ->
           Builder.run_db s ~f:(fun db ->
               query_conflicting_work_manifests
                 s
                 db
                 ~job_id:job.Tjc.Job.id
+                ~start_timeout
                 ~changed_dirspaces
                 context
                 dirspaces
@@ -1440,11 +1452,14 @@ struct
           >>= fun context ->
           fetch Keys.job
           >>= fun job ->
+          fetch Keys.work_manifest_start_timeout
+          >>= fun start_timeout ->
           Builder.run_db s ~f:(fun db ->
               (* An apply aborts no plan, thus the changed dirspaces are not asked for. *)
               S.Db.query_conflicting_work_manifests_in_repo_for_context
                 ~request_id:(Builder.log_id s)
                 ~job_id:job.Tjc.Job.id
+                ~start_timeout
                 ~changed_dirspaces:dirspaces
                 db
                 context

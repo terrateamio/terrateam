@@ -919,15 +919,21 @@ module type S = sig
       result
       Abb.Future.t
 
-    (* [job_id] is the job asking the question.  Work manifests belonging to it,
-       or to any job created after it, are never aborted.  [changed_dirspaces] is
-       the dirspaces that the pull request changes at its head now.  A plan of an
-       older job is aborted when the new plan covers each of its dirspaces that is
-       still in [changed_dirspaces]: a dirspace that the pull request no longer
-       changes needs no plan (RFD 2356). *)
+    (* [job_id] is the job asking the question.  Work manifests belonging to it
+       are never aborted, and a plan of any job created after it is never
+       aborted.  [changed_dirspaces] is the dirspaces that the pull request
+       changes at its head now.  A plan of an older job is aborted when the new
+       plan covers each of its dirspaces that is still in [changed_dirspaces]: a
+       dirspace that the pull request no longer changes needs no plan (RFD 2356).
+
+       [start_timeout] is how long a dispatched work manifest has to call
+       home before it counts as stale.  A stale work manifest is aborted,
+       because it holds the locks of its dirspaces and the queue waits behind it
+       with no end (RFD 2826). *)
     val query_conflicting_work_manifests_in_repo_for_context :
       request_id:string ->
       job_id:Uuidm.t ->
+      start_timeout:Duration.t ->
       changed_dirspaces:Terrat_change.Dirspace.t list ->
       t ->
       (Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t ->
@@ -986,6 +992,9 @@ module type S = sig
     val cleanup_flow_states : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
     val cleanup_plans : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
     val cleanup_repo_trees : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
+
+    val cleanup_stale_work_manifests :
+      request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
 
     val unlock :
       request_id:string -> t -> Api.Repo.t -> Unlock_id.t -> (unit, [> `Error ]) result Abb.Future.t

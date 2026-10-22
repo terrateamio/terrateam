@@ -84,9 +84,44 @@ work_manifests_for_dirspace as (
                     select 1
                     from changed_dirspaces as c
                     where c.dir = other.path and c.workspace = other.workspace))
+),
+-- A work manifest that the dispatcher started and that has not called home
+-- within the start timeout is stuck: its action run never started, or it died
+-- before the first poll.  It stays running, thus it holds the dirspace locks of
+-- its run and new work waits behind it with no end.  Abort it, silently, as the
+-- abort of an older duplicate plan above is silent (RFD 2826).
+--
+-- Our own work manifests are spared, as the SELECT that follows this UPDATE
+-- spares them: the work of this job is not a conflict with itself.  A work
+-- manifest with no dispatch time is one of before the column existed, and it is
+-- not stale.
+stale_work_manifests as (
+    select distinct
+        gwm.id
+    from github_work_manifests as gwm
+-- The views do not carry the dispatch time, thus it comes from work_manifests.
+    inner join work_manifests as core
+        on core.id = gwm.id
+    inner join work_manifest_dirspaceflows as gwmdsfs
+        on gwmdsfs.work_manifest = gwm.id
+    inner join dirspaces
+        on dirspaces.dir = gwmdsfs.path and dirspaces.workspace = gwmdsfs.workspace
+    inner join context as c
+      on c.repo = gwm.repository
+    where gwm.state = 'running'
+          and gwm.run_id is null
+          and now() - core.dispatched_at > make_interval(secs => $start_timeout)
+          and not exists (select 1
+                          from job_work_manifests as jwm
+                          where jwm.work_manifest = gwm.id and jwm.job_id = $job_id)
+),
+work_manifests_to_abort as (
+    select id from work_manifests_for_dirspace
+    union
+    select id from stale_work_manifests
 )
 update work_manifests
 set state = 'aborted', completed_at = now()
-from work_manifests_for_dirspace
-where work_manifests.id = work_manifests_for_dirspace.id
+from work_manifests_to_abort
+where work_manifests.id = work_manifests_to_abort.id
 returning work_manifests.id

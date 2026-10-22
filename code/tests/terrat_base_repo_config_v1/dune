@@ -1,3 +1,9 @@
 (test
  (name test)
- (libraries containers oth sln terrat_base_repo_config_v1 terrat_repo_config))
+ (libraries
+  containers
+  duration
+  oth
+  sln
+  terrat_base_repo_config_v1
+  terrat_repo_config))

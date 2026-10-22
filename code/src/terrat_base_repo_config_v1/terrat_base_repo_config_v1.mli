@@ -967,6 +967,27 @@ module Tree_builder : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Work_manifests : sig
+  (** Limits on the work manifests of the repository. *)
+  type t = {
+    start_timeout : Duration.t; [@default Duration.of_sec 180]
+        (** How long a dispatched work manifest has to call home before the server treats it as
+            stale and aborts it (RFD 2826). The [work_manifests.start_timeout_sec] key of the
+            configuration file gives seconds; the value here is a duration. The value must be at
+            least 1 and at most [Int32.max_int] seconds, and a configuration outside that range is a
+            parse error. The server reads this value from the raw configuration files only, never
+            from a configuration that a build config or tree builder run makes. *)
+    stale_timeout : Duration.t; [@default Duration.of_day 1]
+        (** How long a work manifest may run before the hourly sweep aborts it (RFD 2826). The
+            [work_manifests.stale_timeout_sec] key of the configuration file gives seconds; the
+            value here is a duration, and the default is one day. The value must be at least 1 and
+            at most [Int32.max_int] seconds, and a configuration outside that range is a parse
+            error. The sweep is one global statement per hour, so it reads this value from the
+            derived configuration of the repository. *)
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Workflows : sig
   module Entry : sig
     module Op : sig
@@ -1043,6 +1064,7 @@ module View : sig
     tags : Tags.t; [@default Tags.make ()]
     tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
     when_modified : When_modified.t; [@default When_modified.make ()]
+    work_manifests : Work_manifests.t; [@default Work_manifests.make ()]
     workflows : Workflows.t; [@default []]
   }
   [@@deriving make, show, yojson, eq]
@@ -1163,4 +1185,5 @@ val storage : 'a t -> Storage.t
 val tags : 'a t -> Tags.t
 val tree_builder : 'a t -> Tree_builder.t
 val when_modified : 'a t -> When_modified.t
+val work_manifests : 'a t -> Work_manifests.t
 val workflows : 'a t -> Workflows.t

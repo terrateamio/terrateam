@@ -97,6 +97,7 @@ module Version_1 = Terrat_repo_config_version_1
 module Visible_on = Terrat_repo_config_visible_on
 module When_modified = Terrat_repo_config_when_modified
 module When_modified_nullable = Terrat_repo_config_when_modified_nullable
+module Work_manifests = Terrat_repo_config_work_manifests
 module Workflow_entry = Terrat_repo_config_workflow_entry
 module Workflow_op_apply = Terrat_repo_config_workflow_op_apply
 module Workflow_op_checkov = Terrat_repo_config_workflow_op_checkov

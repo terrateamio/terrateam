@@ -852,7 +852,8 @@ module Db = struct
         /% Var.(str_array (text "workspaces"))
         /% Var.uuid "job_id"
         /% Var.(str_array (text "changed_dirs"))
-        /% Var.(str_array (text "changed_workspaces")))
+        /% Var.(str_array (text "changed_workspaces"))
+        /% Var.integer "start_timeout")
 
     let select_conflicting_work_manifests_in_repo_query =
       Mql_sql.read [%blob "sql/select_conflicting_work_manifests_in_repo2.sql"]
@@ -890,7 +891,8 @@ module Db = struct
         /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
         /% Var.(str_array (text "dirs"))
         /% Var.(str_array (text "workspaces"))
-        /% Var.uuid "job_id")
+        /% Var.uuid "job_id"
+        /% Var.integer "start_timeout")
 
     let select_blocking_work_manifests_in_repo_for_context_query =
       Mql_sql.read [%blob "sql/select_blocking_work_manifests_in_repo_for_context.sql"]
@@ -1016,6 +1018,16 @@ module Db = struct
         (* count *)
         Ret.integer
         /^ delete_old_repo_trees_sql)
+
+    let abort_stale_work_manifests_sql = Mql_sql.read [%blob "sql/abort_stale_work_manifests.sql"]
+
+    let abort_stale_work_manifests =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        /^ abort_stale_work_manifests_sql)
 
     let insert_pull_request_unlock_query = Mql_sql.read [%blob "sql/insert_pull_request_unlock.sql"]
 
@@ -2590,11 +2602,13 @@ module Db = struct
   let query_conflicting_work_manifests_in_repo_for_context
       ~request_id
       ~job_id
+      ~start_timeout
       ~changed_dirspaces
       db
       context
       dirspaces
       op =
+    let start_timeout_sec = CCInt32.of_int (Duration.to_sec start_timeout) in
     let run_type =
       match op with
       | `Plan -> Terrat_work_manifest3.Step.Plan
@@ -2625,7 +2639,8 @@ module Db = struct
             workspaces
             job_id
             changed_dirs
-            changed_workspaces)
+            changed_workspaces
+            start_timeout_sec)
       >>= fun ids ->
       CCList.iter
         (fun id -> Logs.info (fun m -> m "%s : ABORTED_WORK_MANIFEST : %a" request_id Uuidm.pp id))
@@ -2641,7 +2656,8 @@ module Db = struct
             run_type
             dirs
             workspaces
-            job_id)
+            job_id
+            start_timeout_sec)
       >>= fun ids ->
       match
         CCList.partition_filter_map
@@ -2838,6 +2854,23 @@ module Db = struct
     | Ok [] -> assert false
     | Ok (count :: _) ->
         Logs.info (fun m -> m "%s : REPO_TREE_CLEANUP : %d" request_id (Int32.to_int count));
+        Abbs_fc.return_ok ()
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+        Abbs_fc.return_err `Error
+
+  let cleanup_stale_work_manifests ~request_id db =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "abort_stale_work_manifests") (fun () ->
+        Pgsql_io.Prepared_stmt.fetch db Sql.abort_stale_work_manifests ~f:CCFun.id)
+    >>= function
+    | Ok ids ->
+        CCList.iter
+          (fun id ->
+            Logs.info (fun m -> m "%s : ABORTED_WORK_MANIFEST : %a" request_id Uuidm.pp id))
+          ids;
+        Logs.info (fun m ->
+            m "%s : STALE_WORK_MANIFEST_CLEANUP : %d" request_id (CCList.length ids));
         Abbs_fc.return_ok ()
     | Error (#Pgsql_io.err as err) ->
         Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);

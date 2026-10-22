@@ -1,5 +1,5 @@
 (tests
- (names test test_ee2_fc test_work_set test_staleness)
+ (names test test_ee2_fc test_status_checks test_staleness test_work_set)
  (libraries
   abb
   abbs
