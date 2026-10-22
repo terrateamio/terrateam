@@ -276,8 +276,7 @@ let decode_element json =
 
 let decode = function
   | `List elements -> CCResult.map_l decode_element elements
-  | `Null | `Bool _ | `Int _ | `Intlit _ | `Float _ | `String _ | `Assoc _ | `Tuple _ | `Variant _
-    -> Error `Bad_request_err
+  | `Null | `Bool _ | `Int _ | `Intlit _ | `Float _ | `String _ | `Assoc _ -> Error `Bad_request_err
 
 (* Apollo answers an empty query with this element, and with status 200 because
    the batched path never sets a status of its own. *)

@@ -82,6 +82,7 @@ type t = {
   refs : Refs.t;
   remote_state : Remote_state.t;
   remote_tf_state_refs : Remote_tf_state_refs.t;
+  removed_from_fq_address : string option; [@default None]
   tf_module : Sgs_tx_log_data_tf_module_key.t option; [@default None]
   unconditional_seed : bool option; [@default None]
 }

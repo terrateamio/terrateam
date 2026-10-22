@@ -28,8 +28,7 @@ let operation_of_string = function
 let operation_of_actions actions =
   let action_string = function
     | `String s -> Some s
-    | `Assoc _ | `Bool _ | `Float _ | `Int _ | `Intlit _ | `List _ | `Null | `Tuple _ | `Variant _
-      -> None
+    | `Assoc _ | `Bool _ | `Float _ | `Int _ | `Intlit _ | `List _ | `Null -> None
   in
   match CCOption.sequence_l (CCList.map action_string actions) with
   | Some [ "create" ] -> Some Create
