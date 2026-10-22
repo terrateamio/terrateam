@@ -1,3 +1,27 @@
 (tests
  (names assert_test phases_test tags_test)
+ (modules assert_test phases_test tags_test)
  (libraries containers oth unix))
+
+; [run_groups] needs the async backend to show that two groups overlap.
+
+(tests
+ (names groups_test groups_order_test)
+ (modules groups_test groups_order_test)
+ (libraries abb containers logs.fmt oth oth_abb))
+
+; The failure paths of [run_groups] are read from outside the run, because the runner reports a
+; failed group setup and then exits the process.  The helper is that run; the test drives it.
+
+(executable
+ (name groups_failure_helper)
+ (modules groups_failure_helper)
+ (libraries abb logs.fmt oth oth_abb))
+
+(test
+ (name groups_failure_test)
+ (modules groups_failure_test)
+ (libraries containers)
+ (deps %{exe:groups_failure_helper.exe})
+ (action
+  (run %{test} %{exe:groups_failure_helper.exe})))

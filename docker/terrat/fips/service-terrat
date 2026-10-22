@@ -1,0 +1,68 @@
+#!/bin/bash
+# The terrat service of the FIPS image. Its HTTP calls go through the curl that
+# Dockerfile.fips builds against the FIPS OpenSSL.
+
+set -u
+
+echo "[TERRAT-WRAPPER] Starting terrat service wrapper script..."
+
+# Prints the tunnel hostname that terratunnel at $1 reports when it is connected.
+tunnel_hostname() {
+    curl -fsS --max-time 5 "$1/status" | jq -er 'select(.connected and .tunnel_hostname) | .tunnel_hostname'
+}
+
+echo "Starting..."
+
+# Sleep in case we're in a bad runit loop
+sleep 3
+
+if [ -z "${TERRAT_API_BASE:-}" ] && [ -n "${TERRATUNNEL_API_ENDPOINT:-}" ]; then
+    echo "TERRAT_API_BASE not set, attempting to fetch from terratunnel..."
+    if tunnel=$(tunnel_hostname "$TERRATUNNEL_API_ENDPOINT") && [ -n "$tunnel" ]; then
+        export TERRAT_API_BASE="https://$tunnel/api"
+        echo "Set TERRAT_API_BASE to: $TERRAT_API_BASE"
+    else
+        echo "Failed to get tunnel hostname from terratunnel"
+    fi
+fi
+
+if [ -z "${TERRAT_API_BASE:-}" ]; then
+    echo "TERRAT_API_BASE must be set"
+    echo "Please see https://docs.terrateam.io/self-hosted for more information"
+    exit 1
+fi
+
+if [ -n "${CUSTOM_CA_CERT:-}" ]; then
+    echo "Installing custom CA certificates... (found ${#CUSTOM_CA_CERT} chars)"
+    if output=$(printf '%s' "$CUSTOM_CA_CERT" | sudo /usr/local/bin/install-ca-cert 2>&1); then
+        echo "Custom CA certificates installed successfully"
+        [ -n "$output" ] && echo "$output"
+    else
+        echo "Failed to install custom CA certificates"
+        [ -n "$output" ] && echo "Error: $output"
+        echo "Attempting to continue without custom certificates..."
+    fi
+    export CERTS_DIR=/etc/ssl/certs
+else
+    echo "No CUSTOM_CA_CERT environment variable found, skipping certificate installation"
+fi
+if [ -n "${GITHUB_APP_PEM+x}" ]; then
+    export GITHUB_APP_PEM="${GITHUB_APP_PEM//\\n/$'\n'}"
+fi
+# terrat reads TERRAT_PYTHON_EXEC at start and runs no Python.
+export TERRAT_PYTHON_EXEC=/usr/bin/python3
+export OCAMLRUNPARAM=b
+export NGINX_STATUS_URI=http://localhost:8080/nginx_status
+export TERRAT_PORT=8180
+export GITHUB_API_BASE_URL="${GITHUB_API_BASE_URL-https://api.github.com}"
+export INFRACOST_PRICING_API_ENDPOINT="${INFRACOST_PRICING_API_ENDPOINT-}"
+export SELF_HOSTED_INFRACOST_API_KEY="${SELF_HOSTED_INFRACOST_API_KEY-}"
+
+# Run db migration
+if [ -n "${TERRAT_STRACE:-}" ]; then
+    echo "Running in strace $TERRAT_STRACE"
+    /usr/bin/strace -ff -o "$TERRAT_STRACE" -t -s 100 -v /usr/local/bin/terrat migrate --verbosity=debug || exit 1
+    exec /usr/bin/strace -ff -A -o "$TERRAT_STRACE" -t -s 100 -v /usr/local/bin/terrat server --verbosity=debug
+fi
+/usr/local/bin/terrat migrate --verbosity=debug || exit 1
+exec /usr/local/bin/terrat server --verbosity=debug

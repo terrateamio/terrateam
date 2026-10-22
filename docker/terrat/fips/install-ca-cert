@@ -1,0 +1,54 @@
+#!/bin/sh
+# Installs the PEM certificates read from stdin as custom CA certificates.
+# Root owns this script, and the terrat user runs it through sudo without its
+# environment, so PATH is set here.
+
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+
+cert_dir=/usr/local/share/ca-certificates
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Error: This script must be run as root" >&2
+    exit 1
+fi
+
+rm -f "$cert_dir"/custom-ca-cert-*.crt
+
+# Each BEGIN/END block goes to its own file, with the whitespace around each
+# line removed. The blocks may share a line.
+count=$(awk -v dir="$cert_dir" '
+    { s = s $0 "\n" }
+    END {
+        begin = "-----BEGIN CERTIFICATE-----"
+        end = "-----END CERTIFICATE-----"
+        n = 0
+        while ((b = index(s, begin)) > 0) {
+            rest = substr(s, b)
+            e = index(rest, end)
+            if (e == 0) break
+            cert = substr(rest, 1, e + length(end) - 1)
+            s = substr(rest, e + length(end))
+            k = split(cert, lines, "\n")
+            file = sprintf("%s/custom-ca-cert-%d.crt", dir, n)
+            for (i = 1; i <= k; i++) {
+                line = lines[i]
+                gsub(/^[ \t\r]+|[ \t\r]+$/, "", line)
+                printf "%s\n", line > file
+            }
+            close(file)
+            print "Wrote certificate " n " to " file > "/dev/stderr"
+            n++
+        }
+        print n
+    }')
+
+if [ "$count" -eq 0 ]; then
+    echo "No valid certificates found in CUSTOM_CA_CERT"
+    exit 1
+fi
+
+echo "Installing $count custom CA certificate(s)..."
+update-ca-certificates
+echo "Successfully installed $count custom CA certificate(s)"

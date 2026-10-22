@@ -602,8 +602,7 @@ let credential_predates_caps_change ctx =
   |> CCOption.flat_map (assoc "admin")
   |> CCOption.map_or ~default:false (function
     | `List _ -> false
-    | `Assoc _ | `Bool _ | `Float _ | `Int _ | `Intlit _ | `Null | `String _ | `Tuple _ | `Variant _
-      -> true)
+    | `Assoc _ | `Bool _ | `Float _ | `Int _ | `Intlit _ | `Null | `String _ -> true)
 
 let unauthorized ctx =
   if credential_predates_caps_change ctx then (

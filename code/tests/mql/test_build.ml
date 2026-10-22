@@ -33,6 +33,14 @@ let test =
                     (B.select ~from:[ B.table "bar" ] ~cols:(B.columns [ B.col (B.id "id") ]) ()))
                ());
           ());
+      Oth.test ~name:"field_and_func" (fun _ ->
+          assert_renders
+            "select count(f.id, f.name) from foo as f"
+            (B.select
+               ~from:[ B.table ~alias:"f" "foo" ]
+               ~cols:(B.columns [ B.col (B.func "count" [ B.field "f" "id"; B.field "f" "name" ]) ])
+               ());
+          ());
       Oth.test ~name:"union_all" (fun _ ->
           assert_renders
             "select a from foo union all select b from bar"

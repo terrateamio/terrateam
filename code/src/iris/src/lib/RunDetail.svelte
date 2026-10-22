@@ -287,7 +287,6 @@
         
         const updatedPayload = {
           ...fullOutput.payload,
-          _wasLoadedOnDemand: true,
           _loadTimestamp: Date.now()
         };
         
