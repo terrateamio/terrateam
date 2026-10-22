@@ -4,6 +4,7 @@ module Work_set : module type of Terrat_vcs_event_evaluator2_work_set
 module Staleness : module type of Terrat_vcs_event_evaluator2_staleness
 module Ee2_fc : module type of Terrat_vcs_event_evaluator2_fc
 module Merge_steps : module type of Terrat_vcs_event_evaluator2_merge_steps
+module Status_checks : module type of Terrat_vcs_event_evaluator2_status_checks
 module Exec : module type of Abb_bounded_suspendable_executor.Make (Abb) (CCString)
 
 val create_exec : slots:int -> unit -> Exec.t Abb.Future.t
@@ -98,5 +99,11 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     request_id:string -> storage:Terrat_storage.t -> unit -> (unit, [> `Error ]) result Abb.Future.t
 
   val run_repo_config_cleanup :
+    request_id:string -> storage:Terrat_storage.t -> unit -> (unit, [> `Error ]) result Abb.Future.t
+
+  (** [run_stale_work_manifest_cleanup] is the hourly sweep that aborts the runs that are still
+      running past their repository [stale_timeout_sec]. The threshold comes from the stored config,
+      so this entry needs no configuration and no executor. *)
+  val run_stale_work_manifest_cleanup :
     request_id:string -> storage:Terrat_storage.t -> unit -> (unit, [> `Error ]) result Abb.Future.t
 end

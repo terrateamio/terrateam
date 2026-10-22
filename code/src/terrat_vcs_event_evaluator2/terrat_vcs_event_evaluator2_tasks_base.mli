@@ -85,10 +85,6 @@ module Make
     to_ref:S.Api.Ref.t ->
     (Terrat_data.Dirspace_set.t option, Builder.err) result Abb.Future.t
 
-  (** The largest number of dirspaces that get a commit check each. A run with more dirspaces gets
-      no dirspace checks, because a forge shows a long list of checks badly. *)
-  val dirspace_check_threshold : int
-
   (** [pending_apply_check ~config ~account ~repo ~apply_requirements ~commit_checks matches] is the
       waiting [terrateam apply] check, when the repository asks for one and [commit_checks] has no
       [terrateam apply] check yet. The check holds the pull request until it is applied. A run that

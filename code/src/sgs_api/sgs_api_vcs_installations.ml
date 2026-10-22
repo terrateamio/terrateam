@@ -61,6 +61,7 @@ module Github_claim_callback = struct
   module Parameters = struct
     type t = {
       code : string option; [@default None]
+      setup_action : string option; [@default None]
       state : string option; [@default None]
     }
     [@@deriving make, show, eq]
@@ -84,7 +85,9 @@ module Github_claim_callback = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("code", Var (params.code, Option String)); ("state", Var (params.state, Option String));
+           ("code", Var (params.code, Option String));
+           ("state", Var (params.state, Option String));
+           ("setup_action", Var (params.setup_action, Option String));
          ])
       ~url
       ~responses:Responses.t

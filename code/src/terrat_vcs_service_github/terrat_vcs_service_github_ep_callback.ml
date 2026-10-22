@@ -177,42 +177,70 @@ let perform_auth request_id config storage code =
                 emails
               >>| fun () -> Terrat_user.make ~id:user_id ()))
 
-let get config storage code installation_id_opt =
+(* The Stategraph console's install link carries this state. Its users sign in
+   on that console, so the install returns there and creates no session here. *)
+let stategraph_install_return config setup_action ctx =
+  let result =
+    match setup_action with
+    | Some "request" -> "requested"
+    | _ -> "installed"
+  in
+  let uri =
+    Uri.to_string
+      (Terrat_config.web_base_url
+         (Terrat_vcs_service_github_provider.Api.Config.config config)
+         Terrat_brand.Stategraph)
+    ^ "/getting-started/?path=github&github_claim="
+    ^ result
+  in
+  Logs.info (fun m ->
+      m "%s : CALLBACK : STATEGRAPH_INSTALL : result=%s" (Brtl_ctx.token ctx) result);
+  let headers = Cohttp.Header.of_list [ ("location", uri) ] in
+  Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
+
+let login config storage code installation_id_opt ctx =
   let open Abb.Future.Infix_monad in
+  perform_auth (Brtl_ctx.token ctx) config storage code
+  >>= function
+  | Ok user ->
+      let ctx = Terrat_session.create_user_session user ctx in
+      let uri =
+        ctx
+        |> Brtl_ctx.uri_base
+        |> CCFun.flip Uri.with_path "/"
+        |> CCFun.flip
+             Uri.with_query
+             (CCOption.map_or
+                ~default:[]
+                (fun installation_id ->
+                  [ ("installation_id", [ Int64.to_string installation_id ]) ])
+                installation_id_opt)
+        |> Uri.to_string
+      in
+      let headers = Cohttp.Header.of_list [ ("location", uri) ] in
+      Abb.Future.return
+        (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
+  | Error (#Pgsql_pool.err as err) ->
+      Logs.err (fun m -> m "FAIL : %s" (Pgsql_pool.show_err err));
+      Abb.Future.return
+        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+  | Error (#Pgsql_io.err as err) ->
+      Logs.err (fun m -> m "FAIL : %s" (Pgsql_io.show_err err));
+      Abb.Future.return
+        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+  | Error (#Terrat_github.user_err as err) ->
+      Logs.err (fun m -> m "FAIL : %s" (Terrat_github.show_user_err err));
+      Abb.Future.return
+        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+  | Error (#Terrat_github.Oauth.authorize_err as err) ->
+      Logs.err (fun m -> m "FAIL : %a" Terrat_github.Oauth.pp_authorize_err err);
+      Abb.Future.return
+        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+
+let get config storage code installation_id_opt state setup_action =
   Brtl_ep.run ~content_type:"text/plain" ~f:(fun ctx ->
-      perform_auth (Brtl_ctx.token ctx) config storage code
-      >>= function
-      | Ok user ->
-          let ctx = Terrat_session.create_user_session user ctx in
-          let uri =
-            ctx
-            |> Brtl_ctx.uri_base
-            |> CCFun.flip Uri.with_path "/"
-            |> CCFun.flip
-                 Uri.with_query
-                 (CCOption.map_or
-                    ~default:[]
-                    (fun installation_id ->
-                      [ ("installation_id", [ Int64.to_string installation_id ]) ])
-                    installation_id_opt)
-            |> Uri.to_string
-          in
-          let headers = Cohttp.Header.of_list [ ("location", uri) ] in
-          Abb.Future.return
-            (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
-      | Error (#Pgsql_pool.err as err) ->
-          Logs.err (fun m -> m "FAIL : %s" (Pgsql_pool.show_err err));
-          Abb.Future.return
-            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-      | Error (#Pgsql_io.err as err) ->
-          Logs.err (fun m -> m "FAIL : %s" (Pgsql_io.show_err err));
-          Abb.Future.return
-            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-      | Error (#Terrat_github.user_err as err) ->
-          Logs.err (fun m -> m "FAIL : %s" (Terrat_github.show_user_err err));
-          Abb.Future.return
-            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-      | Error (#Terrat_github.Oauth.authorize_err as err) ->
-          Logs.err (fun m -> m "FAIL : %a" Terrat_github.Oauth.pp_authorize_err err);
-          Abb.Future.return
-            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+      match (state, code) with
+      | Some "stategraph", _ -> stategraph_install_return config setup_action ctx
+      | _, Some code -> login config storage code installation_id_opt ctx
+      | _, None ->
+          Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx))

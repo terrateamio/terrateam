@@ -37,6 +37,7 @@ Stategraph Orchestration reads its configuration from `.stategraph/config.yml`. 
 - [tree_builder](/docs/reference/orchestration/configuration/tree-builder): a custom script that defines the file tree and what changed
 - [version](/docs/reference/orchestration/configuration/version): the configuration file format version
 - [when_modified](/docs/reference/orchestration/configuration/when-modified): autoplan and autoapply on file changes
+- [work_manifests](/docs/reference/orchestration/configuration/work-manifests): how long a run has to call home before Orchestration aborts it as stale
 - [workflows](/docs/reference/orchestration/configuration/workflows): the steps of a plan or apply
 
 ## Pull request commands

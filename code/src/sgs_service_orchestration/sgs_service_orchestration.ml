@@ -41,7 +41,7 @@ module Rt = struct
     Brtl_rtng.Route.(
       tenant () / "vcs-installations" / "github" / "claim" / "start" /? Query.(option (string "rd")))
 
-  (* Both optional: GitHub also lands the user here after an app installation,
+  (* All optional: GitHub also lands the user here after an app installation,
      with installation_id and setup_action but no state to complete. Requiring
      them would answer that navigation with a 404. *)
   let vcs_installations_github_claim_callback () =
@@ -52,7 +52,8 @@ module Rt = struct
       / "claim"
       / "callback"
       /? Query.(option (string "code"))
-      /? Query.(option (string "state")))
+      /? Query.(option (string "state"))
+      /? Query.(option (string "setup_action")))
 
   let tenant_github_claimable () =
     Brtl_rtng.Route.(tenant () / "vcs-installations" / "github" / "claimable")

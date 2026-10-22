@@ -297,6 +297,17 @@ For the flow of a run, see [Workflows](/docs/orchestration/workflows). For the s
 - Change the tag query, or wait for the earlier layer.
 - To plan again the directories whose last plan found no changes, name them: `stategraph plan dir:<path>`. See [plan](/docs/reference/orchestration/commands/plan).
 
+### Per-dirspace status checks are missing {#per-dirspace-status-checks-are-missing}
+
+**Symptoms**: A plan or apply run creates no `stategraph plan: <directory> <workspace>` or `stategraph apply: <directory> <workspace>` check, and a branch protection rule that requires one blocks the pull request.
+
+**Cause**: The pull request impacts more than 50 dirspaces. Above that limit Orchestration creates no per-dirspace checks, whatever [`notifications.plan.status_checks.enabled`](/docs/reference/orchestration/configuration/notifications) and `notifications.apply.status_checks.enabled` say, because one large pull request would otherwise fill the check list of the forge.
+
+**Solution**:
+
+- Do not require a per-dirspace check in branch protection. Require `stategraph apply` instead: Orchestration always creates it, and it holds the pull request until every changed dirspace is applied.
+- Split the change into several pull requests, each of which changes 50 dirspaces or fewer, when you need the per-dirspace checks.
+
 ### Apply is waiting on work already running
 
 **Symptoms**: An apply posts a comment that names other work that it waits for.
@@ -306,6 +317,7 @@ For the flow of a run, see [Workflows](/docs/orchestration/workflows). For the s
 **Solution**:
 
 - Wait for the named run to finish. If it is stuck, run the command that the comment gives to clear it. See [unlock](/docs/reference/orchestration/commands/unlock).
+- A run that never started does not need an unlock. When you request the operation, Orchestration aborts a run whose runner never polled and that is older than [`work_manifests.start_timeout_sec`](/docs/reference/orchestration/configuration/work-manifests), and the work behind it starts. No comment announces this abort.
 
 ### Missing plans, or the apply aborts because the plan was superseded
 

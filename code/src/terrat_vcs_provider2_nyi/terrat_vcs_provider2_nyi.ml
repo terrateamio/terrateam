@@ -84,6 +84,7 @@ module Db = struct
   let query_conflicting_work_manifests_in_repo_for_context
       ~request_id
       ~job_id
+      ~start_timeout
       ~changed_dirspaces
       db
       context
@@ -102,6 +103,7 @@ module Db = struct
   let cleanup_flow_states ~request_id db = raise (Failure "nyi")
   let cleanup_plans ~request_id db = raise (Failure "nyi")
   let cleanup_repo_trees ~request_id db = raise (Failure "nyi")
+  let cleanup_stale_work_manifests ~request_id db = raise (Failure "nyi")
   let unlock ~request_id db repo unlock_id = raise (Failure "nyi")
   let query_plan ~request_id db work_manifest_id dirspace = raise (Failure "nyi")
   let store_plan ~request_id db work_manifest_id dirspace data has_changes = raise (Failure "nyi")

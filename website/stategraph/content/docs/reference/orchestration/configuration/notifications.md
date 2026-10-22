@@ -92,8 +92,9 @@ In `header` mode, the per-dirspace changes tables of the plan and apply comments
 - A result with gate approvals or access control denials always posts its comment, whatever the value of `visible_on`, because no other comment carries them.
 - In `header` mode, the summary header is in the plan or apply comment. A comment that `visible_on` hides also hides its header.
 - With `change_or_failure`, the plan comment posts when a plan in the run has changes or the run fails. A successful run with no changes posts no plan comment.
+- A pull request that impacts more than 50 dirspaces gets no per-dirspace checks of either kind, whatever the settings say. Orchestration then behaves as `plan.status_checks.enabled: false` and `apply.status_checks.enabled: false`: one large pull request does not fill the check list of the forge. Do not require a per-dirspace check in branch protection for a repository whose pull requests can exceed 50 dirspaces. The `stategraph apply` check is not affected. To find the cause, see [Per-dirspace status checks are missing](/docs/reference/troubleshooting#per-dirspace-status-checks-are-missing).
 
-`status_checks` covers only the per-dirspace checks. It does not change these checks:
+`status_checks` controls only the per-dirspace checks. It does not change these checks:
 
 - `stategraph apply`, which stays pending until every changed dirspace is applied. Require this check in branch protection. Orchestration always creates it.
 - `stategraph index`, `stategraph build-config`, and `stategraph build-tree`, which belong to other operations.

@@ -5,6 +5,7 @@ module Tjc = Terrat_job_context
 module Msg = Terrat_vcs_provider2.Msg
 module Work_set = Terrat_vcs_event_evaluator2_work_set
 module Merge_steps = Terrat_vcs_event_evaluator2_merge_steps
+module Status_checks = Terrat_vcs_event_evaluator2_status_checks
 
 (* Destination-branch match helpers, shared by the pull-request scope task
    [check_valid_destination_branch] and the push-scope registration in
@@ -939,6 +940,47 @@ struct
       run ~name:"all_matches" (fun _s { Bs.Fetcher.fetch } ->
           let open Irm in
           fetch Keys.matches >>| fun { Keys.Matches.all_matches; _ } -> all_matches)
+
+    (* The static configuration, never the one that the config builder makes: a work manifest can
+       be made by a build config or tree builder run, thus a value that those runs make must not
+       decide when the server aborts work manifests (RFD 2826). *)
+    let work_manifest_start_timeout =
+      run ~name:"work_manifest_start_timeout" (fun _s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.repo_config_raw'
+          >>| fun (_, repo_config) ->
+          let wm = Terrat_base_repo_config_v1.work_manifests repo_config in
+          wm.Terrat_base_repo_config_v1.Work_manifests.start_timeout)
+
+    (* One value for every writer of a per-dirspace check of the pull request, so that the writers
+       of one run type agree on whether the checks are created.
+
+       The count of matches decides only above the cap, thus a repository that turns the checks off
+       for both run types does not pay for it.  A match that the server cannot compute, for example
+       for a deleted branch, does not stop the writers either: the setting alone answers then, as it
+       did before the cap, so a failed run still reports its failure. *)
+    let status_checks_enabled =
+      run ~name:"status_checks_enabled" (fun _s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          let module Dc = Terrat_change_match3.Dirspace_config in
+          let module N = Terrat_base_repo_config_v1.Notifications in
+          fetch Keys.repo_config
+          >>= fun repo_config ->
+          let notifications = Terrat_base_repo_config_v1.notifications repo_config in
+          let setting = N.dirspace_status_checks_enabled notifications in
+          if not (setting ~run:`Plan || setting ~run:`Apply) then Abbs_fc.return_ok setting
+          else
+            Abb.Future.map
+              (function
+                | Ok all_matches ->
+                    let dirspaces =
+                      CCList.map (CCList.map (fun dc -> dc.Dc.dirspace)) all_matches
+                    in
+                    let impacted_dirspaces = Status_checks.impacted_dirspaces dirspaces in
+                    Ok (fun ~run -> Status_checks.enabled ~notifications ~impacted_dirspaces ~run)
+                | Error ((`Noop | `Suspend_eval _ | `Rerun _) as err) -> Error err
+                | Error _ -> Ok setting)
+              (fetch Keys.all_matches))
 
     let all_unapplied_matches =
       run ~name:"all_unapplied_matches" (fun _s { Bs.Fetcher.fetch } ->
@@ -4074,15 +4116,11 @@ struct
           >>= fun account ->
           fetch Keys.repo
           >>= fun repo ->
-          fetch Keys.repo_config
-          >>= fun repo_config ->
+          fetch Keys.status_checks_enabled
+          >>= fun status_checks_enabled ->
           let run_type = Wm.Step.to_string Wm.Step.Apply in
           let checks =
-            if
-              Terrat_base_repo_config_v1.Notifications.dirspace_status_checks_enabled
-                (Terrat_base_repo_config_v1.notifications repo_config)
-                ~run:`Apply
-            then
+            if status_checks_enabled ~run:`Apply then
               CCList.map
                 (fun (work_manifest, dirspace) ->
                   S.Commit_check.make_dirspace
@@ -4261,9 +4299,10 @@ struct
                   >>= fun repo ->
                   fetch Keys.repo_config
                   >>= fun repo_config ->
+                  fetch Keys.status_checks_enabled
+                  >>= fun status_checks_enabled ->
                   fetch Keys.commit_checks
                   >>= fun commit_checks ->
-                  let notifications = Terrat_base_repo_config_v1.notifications repo_config in
                   (* A newest run which failed says more than a run which stands, thus it decides the
                      status of the check. *)
                   let checks_of ~run ~step ~failed ~completed dirspaces =
@@ -4272,12 +4311,7 @@ struct
                         ~cmp:Terrat_dirspace.compare
                         (dirspaces @ Terrat_data.Dirspace_set.to_list failed)
                     in
-                    if
-                      Terrat_base_repo_config_v1.Notifications.dirspace_status_checks_enabled
-                        notifications
-                        ~run
-                      && CCList.length dirspaces <= Tasks_base.dirspace_check_threshold
-                    then
+                    if status_checks_enabled ~run then
                       CCList.map
                         (fun dirspace ->
                           let status, description =
@@ -4464,6 +4498,7 @@ struct
     |> Hmap.add (coerce Keys.run_missing_drift_schedules) Tasks.run_missing_drift_schedules
     |> Hmap.add (coerce Keys.run_next_layer) Tasks.run_next_layer
     |> Hmap.add (coerce Keys.run_plan) Tasks.run_plan
+    |> Hmap.add (coerce Keys.status_checks_enabled) Tasks.status_checks_enabled
     |> Hmap.add (coerce Keys.synthesized_config) Tasks.synthesized_config
     |> Hmap.add (coerce Keys.synthesized_config_dest_branch) Tasks.synthesized_config_dest_branch
     |> Hmap.add
@@ -4476,6 +4511,7 @@ struct
     |> Hmap.add (coerce Keys.work_manifest_event) Tasks.work_manifest_event
     |> Hmap.add (coerce Keys.work_manifest_event_job) Tasks.work_manifest_event_job
     |> Hmap.add (coerce Keys.work_manifests_for_job) Tasks.work_manifests_for_job
+    |> Hmap.add (coerce Keys.work_manifest_start_timeout) Tasks.work_manifest_start_timeout
     |> Hmap.add (coerce Keys.working_layer) Tasks.working_layer
     |> Hmap.add (coerce Keys.working_set_matches) Tasks.working_set_matches
 end

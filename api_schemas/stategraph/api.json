@@ -12497,11 +12497,11 @@
     },
     "/api/v1/vcs-installations/github/claim/callback": {
       "get": {
-        "description": "GitHub returns the user here after authorization. Proves control, sets a short-lived proof cookie, and redirects back to the console; never links an installation itself. Both query parameters are optional because GitHub also lands here after an app installation, with no state to complete: that case is redirected back to the console rather than treated as an error.",
+        "description": "GitHub returns the user here after authorization. Proves control, sets a short-lived proof cookie, and redirects back to the console; never links an installation itself. All query parameters are optional because GitHub also lands here after an app installation, with no state to complete: that case is redirected back to the console with github_claim=installed, or github_claim=requested when setup_action is request, rather than treated as an error.",
         "operationId": "vcs-installations/github-claim-callback",
         "parameters": [
           {
-            "description": "The OAuth authorization code GitHub issued. Ignored when state is absent.",
+            "description": "The OAuth authorization code GitHub issued. Ignored when state is absent or stategraph.",
             "in": "query",
             "name": "code",
             "required": false,
@@ -12510,9 +12510,18 @@
             }
           },
           {
-            "description": "The signed state the claim start endpoint sent to GitHub. Absent when GitHub lands the user here after an app installation.",
+            "description": "The signed state the claim start endpoint sent to GitHub. Absent, or stategraph, when GitHub lands the user here after an app installation.",
             "in": "query",
             "name": "state",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "What GitHub did after an app installation: install, update, or request when the user asked an organization owner to approve the install.",
+            "in": "query",
+            "name": "setup_action",
             "required": false,
             "schema": {
               "type": "string"

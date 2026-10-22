@@ -1234,6 +1234,184 @@ let test_batch_runs_merge_steps_by_phase_round_trip =
           | Some _ | None -> failwith "Round-trip to Version_1 did not produce by_phase")
       | Error err -> failwith ("of_version_1_json failed: " ^ V1.show_of_version_1_json_err err))
 
+(* [work_manifests.start_timeout_sec] is the number of seconds a dispatched work manifest has to
+   call home before the stale check aborts it (RFD 2826).  The default is 180 seconds. *)
+let test_work_manifests_start_timeout_default =
+  Oth.test ~name:"of_version_1_json: work_manifests.start_timeout_sec defaults to 180" (fun _ ->
+      let cfg = config_of_json (`Assoc []) in
+      Oth.Assert.eq
+        ~eq:V1.Work_manifests.equal
+        ~pp:V1.Work_manifests.pp
+        (V1.work_manifests cfg)
+        (V1.Work_manifests.make ());
+      ())
+
+let test_work_manifests_start_timeout_configured =
+  Oth.test ~name:"of_version_1_json: work_manifests.start_timeout_sec" (fun _ ->
+      let json = `Assoc [ ("work_manifests", `Assoc [ ("start_timeout_sec", `Int 45) ]) ] in
+      let cfg = config_of_json json in
+      Oth.Assert.eq
+        ~eq:V1.Work_manifests.equal
+        ~pp:V1.Work_manifests.pp
+        (V1.work_manifests cfg)
+        (V1.Work_manifests.make ~start_timeout:(Duration.of_sec 45) ());
+      ())
+
+(* A timeout below one second has no meaning, and a value above [Int32.max_int] wraps when the
+   server gives it to the database, so the parse rejects both. *)
+let test_work_manifests_start_timeout_below_minimum =
+  Oth.test ~name:"of_version_1_json: work_manifests.start_timeout_sec is at least 1" (fun _ ->
+      let json = `Assoc [ ("work_manifests", `Assoc [ ("start_timeout_sec", `Int 0) ]) ] in
+      match Oth.Assert.error (V1.of_version_1_json json) with
+      | `Repo_config_schema_err _ -> ()
+      | err ->
+          Oth.Assert.false_
+            (Printf.sprintf
+               "Expected start_timeout_sec to be rejected, got %s"
+               (V1.show_of_version_1_json_err err)))
+
+let test_work_manifests_start_timeout_above_maximum =
+  Oth.test
+    ~name:"of_version_1_json: work_manifests.start_timeout_sec is at most Int32.max_int"
+    (fun _ ->
+      let json =
+        `Assoc
+          [
+            ( "work_manifests",
+              `Assoc [ ("start_timeout_sec", `Int (Int32.to_int Int32.max_int + 1)) ] );
+          ]
+      in
+      match Oth.Assert.error (V1.of_version_1_json json) with
+      | `Repo_config_schema_err _ -> ()
+      | err ->
+          Oth.Assert.false_
+            (Printf.sprintf
+               "Expected start_timeout_sec to be rejected, got %s"
+               (V1.show_of_version_1_json_err err)))
+
+(* The default is left out of [to_version_1], as every other default is, and a value that the user
+   set comes back out unchanged. *)
+let test_work_manifests_start_timeout_round_trip =
+  Oth.test ~name:"to_version_1: work_manifests.start_timeout_sec round-trip" (fun _ ->
+      let json = `Assoc [ ("work_manifests", `Assoc [ ("start_timeout_sec", `Int 45) ]) ] in
+      let v1 =
+        V1.to_version_1
+          (Oth.Assert.ok_show ~show:V1.show_of_version_1_json_err (V1.of_version_1_json json))
+      in
+      Oth.Assert.Eq.option
+        ~eq:Repo.Work_manifests.equal
+        ~pp:Repo.Work_manifests.pp
+        ~expected:
+          (Some (Repo.Work_manifests.make ~start_timeout_sec:45 ~stale_timeout_sec:86400 ()))
+        ~actual:v1.Repo.Version_1.work_manifests)
+
+(* The key names its unit, so a configuration that uses the old [start_timeout] key must fail the
+   parse instead of read as the default. *)
+let test_work_manifests_old_key_rejected =
+  Oth.test ~name:"of_version_1_json: work_manifests.start_timeout is rejected" (fun _ ->
+      let json = `Assoc [ ("work_manifests", `Assoc [ ("start_timeout", `Int 45) ]) ] in
+      ignore
+        (Oth.Assert.error
+           ~fail_msg:"work_manifests.start_timeout was accepted"
+           (V1.of_version_1_json json)))
+
+(* [work_manifests.stale_timeout_sec] is the age past which the hourly sweep aborts a run that is
+   still running (RFD 2826).  The default is one day. *)
+let test_work_manifests_stale_timeout_default =
+  Oth.test ~name:"of_version_1_json: work_manifests.stale_timeout_sec defaults to one day" (fun _ ->
+      let cfg = config_of_json (`Assoc []) in
+      Oth.Assert.eq
+        ~eq:V1.Work_manifests.equal
+        ~pp:V1.Work_manifests.pp
+        (V1.work_manifests cfg)
+        (V1.Work_manifests.make
+           ~start_timeout:(Duration.of_sec 180)
+           ~stale_timeout:(Duration.of_day 1)
+           ());
+      ())
+
+let test_work_manifests_stale_timeout_configured =
+  Oth.test ~name:"of_version_1_json: work_manifests.stale_timeout_sec" (fun _ ->
+      let json = `Assoc [ ("work_manifests", `Assoc [ ("stale_timeout_sec", `Int 45) ]) ] in
+      let cfg = config_of_json json in
+      Oth.Assert.eq
+        ~eq:V1.Work_manifests.equal
+        ~pp:V1.Work_manifests.pp
+        (V1.work_manifests cfg)
+        (V1.Work_manifests.make
+           ~start_timeout:(Duration.of_sec 180)
+           ~stale_timeout:(Duration.of_sec 45)
+           ());
+      ())
+
+(* A timeout below one second has no meaning, and a value above [Int32.max_int] wraps when the
+   server gives it to the database, so the parse rejects both. *)
+let test_work_manifests_stale_timeout_below_minimum =
+  Oth.test ~name:"of_version_1_json: work_manifests.stale_timeout_sec is at least 1" (fun _ ->
+      let json = `Assoc [ ("work_manifests", `Assoc [ ("stale_timeout_sec", `Int 0) ]) ] in
+      match Oth.Assert.error (V1.of_version_1_json json) with
+      | `Repo_config_schema_err _ -> ()
+      | err ->
+          Oth.Assert.false_
+            (Printf.sprintf
+               "Expected stale_timeout_sec to be rejected, got %s"
+               (V1.show_of_version_1_json_err err)))
+
+let test_work_manifests_stale_timeout_above_maximum =
+  Oth.test
+    ~name:"of_version_1_json: work_manifests.stale_timeout_sec is at most Int32.max_int"
+    (fun _ ->
+      let json =
+        `Assoc
+          [
+            ( "work_manifests",
+              `Assoc [ ("stale_timeout_sec", `Int (Int32.to_int Int32.max_int + 1)) ] );
+          ]
+      in
+      match Oth.Assert.error (V1.of_version_1_json json) with
+      | `Repo_config_schema_err _ -> ()
+      | err ->
+          Oth.Assert.false_
+            (Printf.sprintf
+               "Expected stale_timeout_sec to be rejected, got %s"
+               (V1.show_of_version_1_json_err err)))
+
+(* A configured value comes back out of [to_version_1], and the default block stays out of it. *)
+let test_work_manifests_stale_timeout_round_trip =
+  Oth.test ~name:"to_version_1: work_manifests.stale_timeout_sec round-trip" (fun _ ->
+      let json = `Assoc [ ("work_manifests", `Assoc [ ("stale_timeout_sec", `Int 45) ]) ] in
+      let v1 =
+        V1.to_version_1
+          (Oth.Assert.ok_show ~show:V1.show_of_version_1_json_err (V1.of_version_1_json json))
+      in
+      Oth.Assert.Eq.option
+        ~eq:Repo.Work_manifests.equal
+        ~pp:Repo.Work_manifests.pp
+        ~expected:(Some (Repo.Work_manifests.make ~start_timeout_sec:180 ~stale_timeout_sec:45 ()))
+        ~actual:v1.Repo.Version_1.work_manifests)
+
+(* The key names its unit, as [start_timeout_sec] does, so a configuration that uses the unsuffixed
+   [stale_timeout] key must fail the parse instead of read as the default. *)
+let test_work_manifests_stale_old_key_rejected =
+  Oth.test ~name:"of_version_1_json: work_manifests.stale_timeout is rejected" (fun _ ->
+      let json = `Assoc [ ("work_manifests", `Assoc [ ("stale_timeout", `Int 45) ]) ] in
+      ignore
+        (Oth.Assert.error
+           ~fail_msg:"work_manifests.stale_timeout was accepted"
+           (V1.of_version_1_json json)))
+
+let test_work_manifests_default_omitted =
+  Oth.test ~name:"to_version_1: a default work_manifests block stays out" (fun _ ->
+      let v1 =
+        V1.to_version_1
+          (Oth.Assert.ok_show
+             ~show:V1.show_of_version_1_json_err
+             (V1.of_version_1_json (`Assoc [])))
+      in
+      Oth.Assert.none
+        ~fail_msg:"a default work_manifests was written out"
+        v1.Repo.Version_1.work_manifests)
+
 (* Tests for the global [when_modified.prechecks] key (RFD 2111).  These pin the parse, the round
    trip, and the two boundaries that the evaluator relies on: a precheck glob is a repository path
    (no [${DIR}] rewrite), and no dir ever carries prechecks. *)
@@ -1486,6 +1664,19 @@ let test =
       test_batch_runs_merge_steps_each_value;
       test_batch_runs_merge_steps_round_trip;
       test_batch_runs_merge_steps_by_phase_round_trip;
+      test_work_manifests_start_timeout_default;
+      test_work_manifests_start_timeout_configured;
+      test_work_manifests_start_timeout_below_minimum;
+      test_work_manifests_start_timeout_above_maximum;
+      test_work_manifests_start_timeout_round_trip;
+      test_work_manifests_old_key_rejected;
+      test_work_manifests_stale_timeout_default;
+      test_work_manifests_stale_timeout_configured;
+      test_work_manifests_stale_timeout_below_minimum;
+      test_work_manifests_stale_timeout_above_maximum;
+      test_work_manifests_stale_timeout_round_trip;
+      test_work_manifests_stale_old_key_rejected;
+      test_work_manifests_default_omitted;
       test_prechecks_default_empty;
       test_prechecks_parse_all_kinds;
       test_prechecks_globs_are_repo_paths;

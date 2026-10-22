@@ -947,6 +947,10 @@
                   "label": "when_modified"
                 },
                 {
+                  "page": "/docs/reference/orchestration/configuration/work-manifests",
+                  "label": "work_manifests"
+                },
+                {
                   "page": "/docs/reference/orchestration/configuration/workflows",
                   "label": "workflows"
                 },

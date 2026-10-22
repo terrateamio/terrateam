@@ -66,6 +66,7 @@ val return_location :
 type redirect_result =
   [ `Ready
   | `Installed
+  | `Requested
   | `No_admin
   | `Forbidden
   | `Expired
