@@ -124,6 +124,8 @@ stategraph tf apply --tenant <tenant-id> --auto-approve
 
 The prompt needs an interactive terminal. When stdin is not a tty, or with `--silent` (`STATEGRAPH_SILENT`), the apply fails without `--auto-approve`. In CI, use `--silent` with `--auto-approve`.
 
+When the plan has no changes, `apply` does not prompt.
+
 In this form, `apply` accepts the `stategraph tf plan` options for its new plan, except `--out`, `--diagnostics`, and `--detailed-exitcode`. A saved plan file already has these choices, and several of the options then cause a usage error.
 
 ### Example
