@@ -110,12 +110,12 @@ struct
   (* The commit checks for an operation on a work manifest.  Separate from creating them so that
      callers operating on many work manifests can collect the checks and create them in one call.
 
-     Only the per-dirspace checks, and only when [notifications] asks for them.  A run reported two
-     checks of its own as well, "terrateam <op> pre-hooks" and "terrateam <op> post-hooks"; they
-     said nothing the run's comment does not say, and every repository paid for them on every pull
-     request, so they are not created any more.  The check that holds a pull request until it is
-     applied, "terrateam apply", is made elsewhere and is unaffected. *)
-  let op_commit_checks notifications config account repo work_manifest description status =
+     Only the per-dirspace checks, and only when [status_checks_enabled] allows them.  A run
+     reported two checks of its own as well, "terrateam <op> pre-hooks" and "terrateam <op>
+     post-hooks"; they said nothing the run's comment does not say, and every repository paid for
+     them on every pull request, so they are not created any more.  The check that holds a pull
+     request until it is applied, "terrateam apply", is made elsewhere and is unaffected. *)
+  let op_commit_checks status_checks_enabled config account repo work_manifest description status =
     let module Wm = Terrat_work_manifest3 in
     match work_manifest.Wm.changes with
     | [] -> []
@@ -126,11 +126,7 @@ struct
           | step :: _ -> step
         in
         let run_type = Wm.Step.to_string step in
-        if
-          Terrat_base_repo_config_v1.Notifications.dirspace_status_checks_enabled
-            notifications
-            ~run:(notifications_run step)
-        then
+        if status_checks_enabled ~run:(notifications_run step) then
           let module Dsf = Terrat_change.Dirspaceflow in
           CCList.map
             (fun { Dsf.dirspace; _ } ->
@@ -149,7 +145,7 @@ struct
 
   let create_op_commit_checks
       create_commit_checks
-      notifications
+      status_checks_enabled
       config
       account
       repo
@@ -160,7 +156,7 @@ struct
     create_commit_checks'
       create_commit_checks
       ref_
-      (op_commit_checks notifications config account repo work_manifest description status)
+      (op_commit_checks status_checks_enabled config account repo work_manifest description status)
 
   (* [stale] is the commit and the dirspaces whose checks go to that commit instead of [ref_]: the
      dirspaces whose result is stale.  A stale result is not valid (RFD 2356, Stale results
@@ -170,7 +166,7 @@ struct
   let create_op_commit_checks_of_result
       ?stale
       create_commit_checks
-      notifications
+      status_checks_enabled
       config
       account
       repo
@@ -198,12 +194,7 @@ struct
     in
     let run_type = Wm.Step.to_string step in
     let dirspace_checks =
-      if
-        Terrat_base_repo_config_v1.Notifications.dirspace_status_checks_enabled
-          notifications
-          ~run:(notifications_run step)
-        && CCList.length result.Wmr.dirspaces_success <= Tasks_base.dirspace_check_threshold
-      then
+      if status_checks_enabled ~run:(notifications_run step) then
         CCList.map
           (fun (dirspace, success) ->
             let status, description = status_of dirspace success in
@@ -242,7 +233,7 @@ struct
 
   let maybe_create_pending_apply_commit_checks
       create_commit_checks
-      notifications
+      status_checks_enabled
       config
       account
       repo
@@ -258,12 +249,7 @@ struct
         |> Sln_set.String.of_list
       in
       let missing_commit_checks =
-        if
-          not
-            (Terrat_base_repo_config_v1.Notifications.dirspace_status_checks_enabled
-               notifications
-               ~run:`Apply)
-        then []
+        if not (status_checks_enabled ~run:`Apply) then []
         else
           all_matches
           |> CCList.filter_map
@@ -336,6 +322,8 @@ struct
     >>= fun repo_config ->
     fetch Keys.matches
     >>= fun matches ->
+    fetch Keys.status_checks_enabled
+    >>= fun status_checks_enabled ->
     fetch
       (match op with
       | `Plan -> Keys.access_control_eval_plan
@@ -459,7 +447,7 @@ struct
         >>| fun work_manifest ->
         ( work_manifest,
           op_commit_checks
-            (Terrat_base_repo_config_v1.notifications repo_config)
+            status_checks_enabled
             (Builder.State.config s)
             account
             repo
@@ -487,7 +475,7 @@ struct
     >>= fun commit_checks ->
     maybe_create_pending_apply_commit_checks
       create_commit_checks
-      (Terrat_base_repo_config_v1.notifications repo_config)
+      status_checks_enabled
       (Builder.State.config s)
       account
       repo
@@ -942,12 +930,12 @@ struct
       >>= fun branch_ref ->
       fetch Keys.create_commit_checks
       >>= fun create_commit_checks ->
-      fetch Keys.repo_config
-      >>= fun repo_config ->
+      fetch Keys.status_checks_enabled
+      >>= fun status_checks_enabled ->
       let module Status = Terrat_commit_check.Status in
       create_op_commit_checks
         create_commit_checks
-        (Terrat_base_repo_config_v1.notifications repo_config)
+        status_checks_enabled
         (Builder.State.config s)
         account
         repo
@@ -1047,12 +1035,12 @@ struct
       >>= fun branch_ref ->
       fetch Keys.create_commit_checks
       >>= fun create_commit_checks ->
-      fetch Keys.repo_config
-      >>= fun repo_config ->
+      fetch Keys.status_checks_enabled
+      >>= fun status_checks_enabled ->
       let module Status = Terrat_commit_check.Status in
       create_op_commit_checks
         create_commit_checks
-        (Terrat_base_repo_config_v1.notifications repo_config)
+        status_checks_enabled
         (Builder.State.config s)
         account
         repo
@@ -1207,12 +1195,12 @@ struct
             >>= fun repo ->
             fetch Keys.create_commit_checks
             >>= fun create_commit_checks ->
-            fetch Keys.repo_config
-            >>= fun repo_config ->
+            fetch Keys.status_checks_enabled
+            >>= fun status_checks_enabled ->
             create_op_commit_checks_of_result
               ?stale
               create_commit_checks
-              (Terrat_base_repo_config_v1.notifications repo_config)
+              status_checks_enabled
               (Builder.State.config s)
               work_manifest.Wm.account
               repo
@@ -1380,11 +1368,11 @@ struct
             >>= fun branch_ref ->
             fetch Keys.create_commit_checks
             >>= fun create_commit_checks ->
-            fetch Keys.repo_config
-            >>= fun repo_config ->
+            fetch Keys.status_checks_enabled
+            >>= fun status_checks_enabled ->
             create_op_commit_checks_of_result
               create_commit_checks
-              (Terrat_base_repo_config_v1.notifications repo_config)
+              status_checks_enabled
               (Builder.State.config s)
               work_manifest.Wm.account
               repo
@@ -1505,12 +1493,12 @@ struct
       >>= fun branch_ref ->
       fetch Keys.create_commit_checks
       >>= fun create_commit_checks ->
-      fetch Keys.repo_config
-      >>= fun repo_config ->
+      fetch Keys.status_checks_enabled
+      >>= fun status_checks_enabled ->
       let module Status = Terrat_commit_check.Status in
       create_op_commit_checks
         create_commit_checks
-        (Terrat_base_repo_config_v1.notifications repo_config)
+        status_checks_enabled
         (Builder.State.config s)
         account
         repo
@@ -1642,12 +1630,12 @@ struct
       >>= fun branch_ref ->
       fetch Keys.create_commit_checks
       >>= fun create_commit_checks ->
-      fetch Keys.repo_config
-      >>= fun repo_config ->
+      fetch Keys.status_checks_enabled
+      >>= fun status_checks_enabled ->
       let module Status = Terrat_commit_check.Status in
       create_op_commit_checks
         create_commit_checks
-        (Terrat_base_repo_config_v1.notifications repo_config)
+        status_checks_enabled
         (Builder.State.config s)
         account
         repo

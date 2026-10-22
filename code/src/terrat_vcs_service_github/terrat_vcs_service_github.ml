@@ -362,6 +362,7 @@ struct
       plan_cleanup : unit Abb.Future.t;
       repo_config_cleanup : unit Abb.Future.t;
       repo_tree_cleanup : unit Abb.Future.t;
+      stale_work_manifest_cleanup : unit Abb.Future.t;
       exec : Terrat_vcs_event_evaluator2.Exec.t;
     }
 
@@ -394,20 +395,47 @@ struct
         (Evaluator2.run_repo_tree_cleanup ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ~storage ())
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> repo_tree_cleanup config storage
 
+    let rec stale_work_manifest_cleanup config storage =
+      let open Abb.Future.Infix_monad in
+      Abbs_fc.ignore
+        (Evaluator2.run_stale_work_manifest_cleanup
+           ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
+           ~storage
+           ())
+      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> stale_work_manifest_cleanup config storage
+
     let name _ = "github"
 
     let start config vcs_config storage exec =
       let open Abb.Future.Infix_monad in
       let config = Provider.Api.Config.make ~config ~vcs_config () in
       Abb.Future.Infix_app.(
-        (fun drift flow_state_cleanup plan_cleanup repo_config_cleanup repo_tree_cleanup ->
-          (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup, repo_tree_cleanup))
+        (fun drift
+             flow_state_cleanup
+             plan_cleanup
+             repo_config_cleanup
+             repo_tree_cleanup
+             stale_work_manifest_cleanup
+           ->
+          ( drift,
+            flow_state_cleanup,
+            plan_cleanup,
+            repo_config_cleanup,
+            repo_tree_cleanup,
+            stale_work_manifest_cleanup ))
         <$> Abb.Future.fork (drift config storage exec)
         <*> Abb.Future.fork (flow_state_cleanup config storage)
         <*> Abb.Future.fork (plan_cleanup config storage)
         <*> Abb.Future.fork (repo_config_cleanup config storage)
-        <*> Abb.Future.fork (repo_tree_cleanup config storage))
-      >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup, repo_tree_cleanup) ->
+        <*> Abb.Future.fork (repo_tree_cleanup config storage)
+        <*> Abb.Future.fork (stale_work_manifest_cleanup config storage))
+      >>= fun ( drift,
+                flow_state_cleanup,
+                plan_cleanup,
+                repo_config_cleanup,
+                repo_tree_cleanup,
+                stale_work_manifest_cleanup )
+            ->
       Abbs_fc.return_ok
         {
           config;
@@ -417,6 +445,7 @@ struct
           plan_cleanup;
           repo_config_cleanup;
           repo_tree_cleanup;
+          stale_work_manifest_cleanup;
           exec;
         }
 
@@ -429,7 +458,10 @@ struct
       Abb.Future.abort t.plan_cleanup
       >>= fun () ->
       Abb.Future.abort t.repo_config_cleanup
-      >>= fun () -> Abb.Future.abort t.repo_tree_cleanup >>= fun () -> Abb.Future.return ()
+      >>= fun () ->
+      Abb.Future.abort t.repo_tree_cleanup
+      >>= fun () ->
+      Abb.Future.abort t.stale_work_manifest_cleanup >>= fun () -> Abb.Future.return ()
 
     let routes t = Routes.routes t.config t.storage t.exec
 

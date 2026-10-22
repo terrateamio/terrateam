@@ -573,6 +573,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "create_commit_checks"
 
   let commit_checks : Terrat_commit_check.t list Key.t = Hmap.Key.create "commit_checks"
+
+  (* Whether the per-dirspace checks of a run are created for this pull request.  One value of
+     the pull request serves every writer of such checks, so they all agree. *)
+  let status_checks_enabled : (run:[ `Plan | `Apply | `Other ] -> bool) Key.t =
+    Hmap.Key.create "status_checks_enabled"
+
+  (* How long a dispatched work manifest has to call home before the stale check aborts it.  One
+     value of the job serves every check of it, so they all agree. *)
+  let work_manifest_start_timeout : Duration.t Key.t = Hmap.Key.create "work_manifest_start_timeout"
   let publish_dest_branch_no_match : unit Key.t = Hmap.Key.create "publish_dest_branch_no_match"
 
   (* Context management *)

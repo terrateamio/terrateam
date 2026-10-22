@@ -1870,6 +1870,9 @@
         "when_modified": {
           "$ref": "#/definitions/when-modified"
         },
+        "work_manifests": {
+          "$ref": "#/definitions/work-manifests"
+        },
         "workflows": {
           "items": {
             "$ref": "#/definitions/workflow-entry"
@@ -1945,6 +1948,26 @@
             "type": "string"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "work-manifests": {
+      "additionalProperties": false,
+      "properties": {
+        "stale_timeout_sec": {
+          "default": 86400,
+          "description": "Seconds that a run can stay in the running state before the hourly sweep aborts the run.  Default is 86400, one day.",
+          "maximum": 2147483647,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "start_timeout_sec": {
+          "default": 180,
+          "description": "Seconds that a dispatched run has to call home before Orchestration aborts the run as stale.  Default is 180.",
+          "maximum": 2147483647,
+          "minimum": 1,
+          "type": "integer"
         }
       },
       "type": "object"

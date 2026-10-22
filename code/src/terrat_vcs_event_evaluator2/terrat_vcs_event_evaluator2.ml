@@ -6,6 +6,7 @@ module Ee2_fc = Terrat_vcs_event_evaluator2_fc
 module Fc = Abbs_fc
 module Irm = Fc.Infix_result_monad
 module Merge_steps = Terrat_vcs_event_evaluator2_merge_steps
+module Status_checks = Terrat_vcs_event_evaluator2_status_checks
 module Tjc = Terrat_job_context
 module Exec = Abb_bounded_suspendable_executor.Make (Abb) (CCString)
 
@@ -672,6 +673,21 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Error `Error -> Fc.return_err `Error
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m -> m "%s : REPO_CONFIG_CLEANUP : %a" request_id Pgsql_pool.pp_err err);
+        Fc.return_err `Error
+
+  let run_stale_work_manifest_cleanup ~request_id ~storage () =
+    let open Abb.Future.Infix_monad in
+    Logs.info (fun m -> m "%s : STALE_WORK_MANIFEST_CLEANUP : START" request_id);
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m -> m "%s : STALE_WORK_MANIFEST_CLEANUP : END : time=%f" request_id t))
+      (fun () -> with_conn storage ~f:(fun db -> S.Db.cleanup_stale_work_manifests ~request_id db))
+    >>= function
+    | Ok () -> Fc.return_ok ()
+    | Error `Error -> Fc.return_err `Error
+    | Error (#Pgsql_pool.err as err) ->
+        Logs.err (fun m ->
+            m "%s : STALE_WORK_MANIFEST_CLEANUP : %a" request_id Pgsql_pool.pp_err err);
         Fc.return_err `Error
 
   let work_manifest_result ~request_id ~config ~storage ~exec ~work_manifest_id result =

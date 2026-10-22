@@ -187,6 +187,8 @@ struct
               (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
               working_set_matches
           in
+          fetch Keys.work_manifest_start_timeout
+          >>= fun start_timeout ->
           Builder.run_db s ~f:(fun db ->
               time_it
                 s
@@ -202,6 +204,7 @@ struct
                   S.Db.query_conflicting_work_manifests_in_repo_for_context
                     ~request_id:(Builder.log_id s)
                     ~job_id:job.Tjc.Job.id
+                    ~start_timeout
                     ~changed_dirspaces:dirspaces
                     db
                     context

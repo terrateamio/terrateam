@@ -245,8 +245,6 @@ struct
               from_stored);
         Abbs_fc.return_ok None)
 
-  let dirspace_check_threshold = 50
-
   let pending_apply_check ~config ~account ~repo ~apply_requirements ~commit_checks matches =
     let module Ar = Terrat_base_repo_config_v1.Apply_requirements in
     let apply_check_exists =

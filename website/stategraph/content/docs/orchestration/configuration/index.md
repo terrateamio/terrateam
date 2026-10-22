@@ -206,6 +206,7 @@ Each key has its own page in the [configuration reference](/docs/reference/orche
 - [tree_builder](/docs/reference/orchestration/configuration/tree-builder): a script that defines which files exist and which have changed.
 - [version](/docs/reference/orchestration/configuration/version): the configuration file format version.
 - [when_modified](/docs/reference/orchestration/configuration/when-modified): file patterns and autoplan (which changes trigger a plan), and autoapply (apply after merge).
+- [work_manifests](/docs/reference/orchestration/configuration/work-manifests): how long a dispatched run has to call home before Orchestration aborts it as stale.
 - [workflows](/docs/reference/orchestration/configuration/workflows): custom plan and apply steps.
 
 ## Basic example

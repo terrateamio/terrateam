@@ -43,21 +43,25 @@ work_manifests_for_dirspace as (
     select
         gwm.id,
 -- Consider a work manifest as maybe stale if it was dispatched but has not
--- started after a minute, or if it has been in flight for over an hour.  A work
--- manifest that is still queued is not stale, it may legitimately be waiting on
--- other work against its dirspaces.
+-- called home within the start timeout, or if it has been in flight for over an
+-- hour.  A work manifest that is still queued is not stale, it may legitimately
+-- be waiting on other work against its dirspaces.  A null dispatch time is a
+-- work manifest of before the column existed, and it is not stale (RFD 2826).
         ((gwm.state = 'running'
           and gwm.run_id is null
-          and (now() - gwm.created_at > interval '1 minutes'))
+          and (now() - core.dispatched_at > make_interval(secs => $start_timeout)))
          or (now() - gwm.created_at > interval '1 hour')) as maybe_stale
     from dirspaces
     inner join work_manifest_dirspaceflows as gwmdsfs
         on dirspaces.dir = gwmdsfs.path and dirspaces.workspace = gwmdsfs.workspace
     inner join wm as gwm
         on gwmdsfs.work_manifest = gwm.id
+-- The views do not carry the dispatch time, thus it comes from work_manifests.
+    inner join work_manifests as core
+        on core.id = gwm.id
     inner join context as c
       on c.repo = gwm.repository
-    group by gwm.id, gwm.state, gwm.run_id, gwm.created_at
+    group by gwm.id, gwm.state, gwm.run_id, gwm.created_at, core.dispatched_at
 )
 select
     gwm.id,

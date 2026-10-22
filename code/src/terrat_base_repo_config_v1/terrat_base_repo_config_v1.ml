@@ -1368,6 +1368,49 @@ module Tree_builder = struct
   [@@deriving make, show, yojson, eq]
 end
 
+(* The largest value that the configuration accepts, which is the largest interval that
+   [CCInt32.of_int] converts without wrapping.  The stale checks give the value to the database as
+   an interval. *)
+let max_config_seconds = Int32.to_int Int32.max_int
+
+(* The configuration file gives seconds. A value outside the range that the schema allows is a
+   parse error: a negative value has no meaning, and a value above [max_config_seconds] wraps when
+   the server gives it to the database. *)
+let duration_of_config_seconds seconds =
+  if seconds < 1 || seconds > max_config_seconds then
+    Error (Printf.sprintf "must be between 1 and %d seconds" max_config_seconds)
+  else Ok (Duration.of_sec seconds)
+
+module Work_manifests = struct
+  type t = {
+    start_timeout :
+      (Duration.t
+      [@default Duration.of_sec 180]
+      [@equal fun a b -> Int64.equal a b]
+      [@to_yojson fun timeout -> `Int (Duration.to_sec timeout)]
+      [@of_yojson
+        function
+        | `Int seconds -> (
+            match duration_of_config_seconds seconds with
+            | Ok start_timeout -> Ok start_timeout
+            | Error err -> Error ("start_timeout_sec " ^ err))
+        | _ -> Error "start_timeout_sec must be an integer"]);
+    stale_timeout :
+      (Duration.t
+      [@default Duration.of_day 1]
+      [@equal fun a b -> Int64.equal a b]
+      [@to_yojson fun timeout -> `Int (Duration.to_sec timeout)]
+      [@of_yojson
+        function
+        | `Int seconds -> (
+            match duration_of_config_seconds seconds with
+            | Ok stale_timeout -> Ok stale_timeout
+            | Error err -> Error ("stale_timeout_sec " ^ err))
+        | _ -> Error "stale_timeout_sec must be an integer"]);
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Workflows = struct
   module Entry = struct
     module Op = struct
@@ -1444,6 +1487,7 @@ module View = struct
     tags : Tags.t; [@default Tags.make ()]
     tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
     when_modified : When_modified.t; [@default When_modified.make ()]
+    work_manifests : Work_manifests.t; [@default Work_manifests.make ()]
     workflows : Workflows.t; [@default []]
   }
   [@@deriving make, show, yojson, eq]
@@ -2935,6 +2979,36 @@ let of_version_1_tags tags =
   map_opt of_version_1_tags_branches dest_branch
   >>= fun dest_branch -> Ok (Tags.make ?branch ?dest_branch ())
 
+(* The version 1 type holds plain integers, thus a value that decodes never reaches the schema
+   check of the JSON.  This is the schema error of such a value. *)
+let work_manifests_schema_err = function
+  | None -> None
+  | Some { Terrat_repo_config.Work_manifests.start_timeout_sec; stale_timeout_sec } -> (
+      match
+        (duration_of_config_seconds start_timeout_sec, duration_of_config_seconds stale_timeout_sec)
+      with
+      | Ok _, Ok _ -> None
+      | Error msg, _ ->
+          Some { Jsonschema_check.Validation_err.msg; path = "work_manifests.start_timeout_sec" }
+      | _, Error msg ->
+          Some { Jsonschema_check.Validation_err.msg; path = "work_manifests.stale_timeout_sec" })
+
+(* An out-of-range value never reaches here from a configuration file, because the JSON entry
+   point rejects it.  A version 1 configuration that is built in memory can hold one, and the
+   default applies to it. *)
+let seconds_or_default default seconds =
+  match duration_of_config_seconds seconds with
+  | Ok seconds -> seconds
+  | Error _ -> Duration.of_sec default
+
+let of_version_1_work_manifests
+    { Terrat_repo_config.Work_manifests.start_timeout_sec; stale_timeout_sec } =
+  Ok
+    (Work_manifests.make
+       ~start_timeout:(seconds_or_default 180 start_timeout_sec)
+       ~stale_timeout:(seconds_or_default 86400 stale_timeout_sec)
+       ())
+
 let of_version_1_workflows_lock_policy = function
   | `Apply -> Workflows.Entry.Lock_policy.Apply
   | `Merge -> Workflows.Entry.Lock_policy.Merge
@@ -3033,6 +3107,7 @@ let of_version_1 v1 =
     tree_builder;
     version = _;
     when_modified;
+    work_manifests;
     workflows;
   } =
     v1
@@ -3077,6 +3152,8 @@ let of_version_1 v1 =
   >>= fun tags ->
   map_opt of_version_1_tree_builder tree_builder
   >>= fun tree_builder ->
+  map_opt of_version_1_work_manifests work_manifests
+  >>= fun work_manifests ->
   map_opt (of_version_1_workflows engine integrations lock_policy) workflows
   >>= fun workflows ->
   Ok
@@ -3105,12 +3182,16 @@ let of_version_1 v1 =
        ?tags
        ?tree_builder
        ?when_modified
+       ?work_manifests
        ?workflows
        ())
 
 let of_version_1_json json =
   match Terrat_repo_config.Version_1.of_yojson json with
-  | Ok config -> of_version_1 config
+  | Ok config -> (
+      match work_manifests_schema_err config.V1.work_manifests with
+      | Some err -> Error (`Repo_config_schema_err [ err ])
+      | None -> of_version_1 config)
   | Error err -> (
       match
         Jsonschema_check.validate_json_schema ~schema:config_schema (Yojson.Safe.to_string json)
@@ -3950,6 +4031,14 @@ let to_version_1_gate gate =
   let { Workflow_step.Gate.all_of; any_of; any_of_count; token; name } = gate in
   { G.all_of; any_of; any_of_count; token; name }
 
+let to_version_1_work_manifests work_manifests =
+  let module Wm = Terrat_repo_config.Work_manifests in
+  let { Work_manifests.start_timeout; stale_timeout } = work_manifests in
+  {
+    Wm.start_timeout_sec = Duration.to_sec start_timeout;
+    stale_timeout_sec = Duration.to_sec stale_timeout;
+  }
+
 let to_version_1_workflows_op =
   let module Op = Terrat_repo_config.Workflow_op_list in
   CCList.map (function
@@ -4109,6 +4198,7 @@ let to_version_1 t =
     tags;
     tree_builder;
     when_modified;
+    work_manifests;
     workflows;
   } =
     t
@@ -4189,6 +4279,11 @@ let to_version_1 t =
         CCFun.(When_modified.equal (When_modified.make ()) %> not)
         to_version_1_when_modified
         when_modified;
+    work_manifests =
+      map_opt_if_true
+        CCFun.(Work_manifests.equal (Work_manifests.make ()) %> not)
+        to_version_1_work_manifests
+        work_manifests;
     workflows = map_opt_if_true (( <> ) []) to_version_1_workflows workflows;
   }
 
@@ -4554,4 +4649,5 @@ let storage t = t.View.storage
 let tags t = t.View.tags
 let tree_builder t = t.View.tree_builder
 let when_modified t = t.View.when_modified
+let work_manifests t = t.View.work_manifests
 let workflows t = t.View.workflows
