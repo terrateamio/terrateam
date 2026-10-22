@@ -976,6 +976,28 @@ module Task = struct
       inner_fut_ref := Some inner;
       ignore (Future.run_with_state inner worker_state);
       post_callback ();
+      (* One-shot terminal watcher: guarantees the wire is delivered even when the chain's
+         callbacks stop being routed to [ctx] (a cross-state promise set resumes the chain
+         under the setter's state, so later ops bypass the mailbox and [post_callback] would
+         never run again).  The callback does only state-free, domain-safe work (mailbox push
+         + gate CAS), exactly like [abort_hook], so it is safe from wherever the terminal
+         transition is observed. *)
+      let watcher =
+        Future.await_bind
+          (fun _set ->
+            (* An empty thunk: [Op_queue.drain_mailbox] calls [post_callback] after each one it
+               pops, so the push alone is what wakes the drainer. *)
+            Saturn.Single_consumer_queue.push ctx.Task_ctx.mailbox (fun () -> ());
+            if Atomic.compare_and_set ctx.Task_ctx.draining false true then
+              if
+                not
+                  (Abb_domain_pool.try_enqueue el.El.thread_pool (fun () ->
+                       Op_queue.drain_mailbox ctx))
+              then Op_queue.drain_mailbox ctx;
+            Future.return ())
+          inner
+      in
+      ignore (Future.run_with_state watcher worker_state);
       (* Drain anything that was pushed during the initial advance, then
          release the [draining] gate. *)
       Op_queue.drain_mailbox ctx

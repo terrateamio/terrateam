@@ -511,7 +511,7 @@ module type S = sig
   end
 
   module Group : sig
-    type 'g t
+    type 'g t = 'g Phase.t
 
     val make :
       name:string ->
@@ -706,20 +706,33 @@ module Make (T : T) : S with type 'a m = 'a T.t = struct
   let timeout _duration _test = failwith "nyi"
 
   module Phase = struct
-    type 'g t = Run_state.t -> 'g -> (Test_result.t list, string) result T.t
+    (* Running a phase gives back, once its setup succeeded, the rest of the phase: its tests, then
+       its teardown.  [eval_groups] uses the split to finish every setup before it starts any
+       tests. *)
+    type 'g t = Run_state.t -> 'g -> (unit -> Test_result.t list T.t, string) result T.t
 
     let make ~name ~setup ~teardown test_fn rs g =
       Logs.debug (fun m -> m "phase : start : %s" name);
       setup g
       >>= function
       | Ok v ->
-          test_fn v rs
-          >>= fun rr ->
-          teardown v
-          >>= fun () ->
-          Logs.debug (fun m -> m "phase : end : %s" name);
-          return (Ok rr)
+          return
+            (Ok
+               (fun () ->
+                 test_fn v rs
+                 >>= fun rr ->
+                 teardown v
+                 >>= fun () ->
+                 Logs.debug (fun m -> m "phase : end : %s" name);
+                 return rr))
       | Error msg -> return (Error (Printf.sprintf "Phase %s setup failed:\n%s" name msg))
+
+    (* The whole phase, setup to teardown. *)
+    let run phase rs g =
+      phase rs g
+      >>= function
+      | Ok rest -> rest () >>= fun rr -> return (Ok rr)
+      | Error _ as err -> return err
   end
 
   module Group = struct
@@ -748,7 +761,7 @@ module Make (T : T) : S with type 'a m = 'a T.t = struct
         let rec go acc = function
           | [] -> teardown setup_value >>= fun () -> return (Ok (CCList.flatten (CCList.rev acc)))
           | phase :: phases -> (
-              phase rs setup_value
+              Phase.run phase rs setup_value
               >>= function
               | Ok rr -> go (rr :: acc) phases
               | Error msg -> teardown setup_value >>= fun () -> return (Error msg))
@@ -761,12 +774,23 @@ module Make (T : T) : S with type 'a m = 'a T.t = struct
      failures of the whole set into one message rather than stopping at the first. *)
   let eval_groups ~mode ~file ~setup ~teardown ~after groups =
     with_run_state ~mode ~file ~setup (fun rs setup_value ->
+        (* The setups overlap, and the tests start only once all of them have finished.  The
+           executor takes tests in the order they are enqueued, thus the groups' tests enter it in
+           list order and not in the order their setups happened to finish. *)
         T.parallel (CCList.map (fun group () -> group rs setup_value) groups)
+        >>= fun started ->
+        T.parallel
+          (CCList.map
+             (fun started () ->
+               match started with
+               | Ok rest -> rest () >>= fun rr -> return (Ok rr)
+               | Error _ as err -> return err)
+             started)
         >>= fun group_results ->
         let rec go acc = function
           | [] -> return (Ok (CCList.rev acc))
           | phase :: phases -> (
-              phase rs setup_value
+              Phase.run phase rs setup_value
               >>= function
               | Ok rr -> go (rr :: acc) phases
               | Error msg -> return (Error msg))

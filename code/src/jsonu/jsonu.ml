@@ -60,8 +60,6 @@ let rec merge' ~null_is_identity ~list ~base override =
   | v, `Null when null_is_identity -> Ok v
   | _, `Null -> Ok `Null
   | `Null, v -> Ok v
-  | `Tuple _, _ | _, `Tuple _ -> assert false
-  | `Variant _, _ | _, `Variant _ -> assert false
   | b, o -> Error (`Type_mismatch_err (None, b, o))
 
 let merge ?(null_is_identity = false) ?(list = `Prepend) ~base override =

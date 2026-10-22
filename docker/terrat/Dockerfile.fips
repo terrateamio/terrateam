@@ -3,14 +3,15 @@
 # All cryptography must resolve to one OpenSSL install that has the FIPS
 # provider active, so the runtime deletes the distro libssl/libcrypto and puts
 # /usr/local/ssl on the loader path in their place. The base OpenSSL version
-# must stay the one Wolfi links its own binaries against, or those binaries
-# lose symbols when the swap happens.
+# must stay the OpenSSL 3 release that Wolfi's packages link against, or those
+# packages lose symbols when the swap happens. A package that links OpenSSL 4
+# is outside the swap, and the runtime stage refuses it.
 #
 # docker/terrat/Dockerfile remains the non-FIPS build. This file shares no cog
 # regions with it and docker/terrat/render.sh does not generate it.
 
 # ---------------------------------------------------------------------------
-# OpenSSL with the FIPS provider, and libtls built against it.
+# OpenSSL with the FIPS provider, and libtls and libcurl built against it.
 #
 # fips.so comes from the validated source release, which is older than the base
 # release it is loaded into. That pairing is what OpenSSL's README-FIPS
@@ -19,21 +20,28 @@
 # Wolfi ships no libretls-dev and its libretls carries a different soname, so
 # code/src/otls (pkg-config libtls) has nothing to build against unless libtls
 # is built here.
+#
+# Wolfi links its libcurl to OpenSSL 4, which has no FIPS build here. terrat
+# makes its HTTP calls through libcurl (code/src/abb_curl), so libcurl and the
+# curl CLI are built here too.
 # ---------------------------------------------------------------------------
 FROM cgr.dev/chainguard/wolfi-base:latest@sha256:256c88bb066424045021090932d50be93c8e3f2ce3586707702a401b146f3e43 AS openssl-fips
 
 ARG OPENSSL_FIPS_PROVIDER_VERSION=3.1.2
 ARG OPENSSL_VERSION=3.6.4
 ARG LIBRETLS_VERSION=3.8.1
+ARG CURL_VERSION=8.23.0
 ARG PGP_KEYSERVER=keyserver.ubuntu.com
 
 ARG OPENSSL_FIPS_PROVIDER_SHA256=a0ce69b8b97ea6a35b96875235aa453b966ba3cba8af2de23657d8b6767d6539
 ARG OPENSSL_SHA256=9bffaa1ad1e07b354c21bd3324ec02fa15579f45a7d0494b3e74bc449b7333ef
 ARG LIBRETLS_SHA256=3bc9fc0e61827ee2f608e5e44993a8fda6d610b80a1e01a9c75610cc292997b5
+ARG CURL_SHA256=e3de77cfa6367083c776a26647fc9f633b538c06c3baa73d931a252ac8f72b49
 
 # Two signers: the OpenSSL project key covers the current release, and the
 # 3.1.2 tarball predates it.
 ARG OPENSSL_PGP_FINGERPRINTS="0xB146647E45A7B33947AB226B2A2C87D161692D40 0xEFC0A467D613CB83C7ED6D30D894E2CE8B3D79F5"
+ARG CURL_PGP_FINGERPRINT=0x27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2
 
 ENV SSL_PREFIX=/usr/local/ssl
 
@@ -49,34 +57,41 @@ RUN apk add --no-cache \
     gpg-agent \
     libtool \
     make \
+    nghttp2-dev \
     perl \
     pkgconf \
     zlib-dev
 
 WORKDIR /usr/src
 
-# SHA-256 pins the exact artifact; the OpenSSL release signatures prove who
-# produced it. libretls publishes no signature, so the digest is its only gate.
+# SHA-256 pins the exact artifact; the OpenSSL and curl release signatures
+# prove who produced it. libretls publishes no signature, so the digest is its
+# only gate.
 RUN set -eux; \
     curl -fsSLO "https://www.openssl.org/source/old/3.1/openssl-${OPENSSL_FIPS_PROVIDER_VERSION}.tar.gz"; \
     curl -fsSLO "https://www.openssl.org/source/old/3.1/openssl-${OPENSSL_FIPS_PROVIDER_VERSION}.tar.gz.asc"; \
     curl -fsSLO "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz"; \
     curl -fsSLO "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz.asc"; \
     curl -fsSLO "https://causal.agency/libretls/libretls-${LIBRETLS_VERSION}.tar.gz"; \
+    curl -fsSLO "https://curl.se/download/curl-${CURL_VERSION}.tar.gz"; \
+    curl -fsSLO "https://curl.se/download/curl-${CURL_VERSION}.tar.gz.asc"; \
     echo "${OPENSSL_FIPS_PROVIDER_SHA256}  openssl-${OPENSSL_FIPS_PROVIDER_VERSION}.tar.gz" | sha256sum -c -; \
     echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c -; \
     echo "${LIBRETLS_SHA256}  libretls-${LIBRETLS_VERSION}.tar.gz" | sha256sum -c -; \
+    echo "${CURL_SHA256}  curl-${CURL_VERSION}.tar.gz" | sha256sum -c -; \
     GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
-    for key in ${OPENSSL_PGP_FINGERPRINTS}; do \
+    for key in ${OPENSSL_PGP_FINGERPRINTS} ${CURL_PGP_FINGERPRINT}; do \
         gpg --batch --keyserver "${PGP_KEYSERVER}" --recv-keys "${key}"; \
     done; \
     gpg --batch --verify "openssl-${OPENSSL_FIPS_PROVIDER_VERSION}.tar.gz.asc" "openssl-${OPENSSL_FIPS_PROVIDER_VERSION}.tar.gz"; \
     gpg --batch --verify "openssl-${OPENSSL_VERSION}.tar.gz.asc" "openssl-${OPENSSL_VERSION}.tar.gz"; \
+    gpg --batch --verify "curl-${CURL_VERSION}.tar.gz.asc" "curl-${CURL_VERSION}.tar.gz"; \
     gpgconf --kill all || :; \
     rm -rf "${GNUPGHOME}"; \
     tar -xzf "openssl-${OPENSSL_FIPS_PROVIDER_VERSION}.tar.gz"; \
     tar -xzf "openssl-${OPENSSL_VERSION}.tar.gz"; \
-    tar -xzf "libretls-${LIBRETLS_VERSION}.tar.gz"
+    tar -xzf "libretls-${LIBRETLS_VERSION}.tar.gz"; \
+    tar -xzf "curl-${CURL_VERSION}.tar.gz"
 
 # The provider tree is configured and built but never installed: only
 # providers/fips.so leaves it.
@@ -132,8 +147,7 @@ RUN set -eux; \
 # default_properties = fips=yes, so every implicit fetch resolves in the FIPS
 # module and base carries the encoders and decoders, which that module does not
 # contain. default answers only a fetch that asks for an implementation outside
-# FIPS. Python's hashlib makes an MD5 constructor through such a fetch when it
-# is imported, and Wolfi's python has no built-in _md5 behind it.
+# FIPS.
 RUN set -eux; \
     cnf="${SSL_PREFIX}/openssl.cnf"; \
     sed -i 's|# .include fipsmodule.cnf|.include '"${SSL_PREFIX}"'/fipsmodule.cnf|' "${cnf}"; \
@@ -155,6 +169,35 @@ RUN set -eux; \
     ldconfig; \
     test -f "${SSL_PREFIX}/include/tls.h"; \
     test -f "${SSL_PREFIX}/lib/pkgconfig/libtls.pc"
+
+# libcurl and the curl CLI link the FIPS OpenSSL, and use the CA bundle of
+# Wolfi's ca-certificates. The run path keeps them on the FIPS libraries where
+# Wolfi's libcurl is also installed, as in this stage.
+RUN set -eux; \
+    cd "curl-${CURL_VERSION}"; \
+    PKG_CONFIG_PATH="${SSL_PREFIX}/lib/pkgconfig" \
+    LDFLAGS="-Wl,-rpath,${SSL_PREFIX}/lib" \
+        ./configure --prefix="${SSL_PREFIX}" \
+                    --with-openssl="${SSL_PREFIX}" \
+                    --with-ca-bundle=/etc/ssl/certs/ca-certificates.crt \
+                    --with-ca-path=/etc/ssl/certs \
+                    --with-nghttp2 \
+                    --with-zlib \
+                    --without-brotli \
+                    --without-libidn2 \
+                    --without-libpsl \
+                    --without-libssh2 \
+                    --without-zstd \
+                    --disable-docs \
+                    --disable-ldap \
+                    --disable-static; \
+    make -j"$(nproc)"; \
+    make install; \
+    ldconfig; \
+    "${SSL_PREFIX}/bin/curl" --version | tee /tmp/curl-version.txt; \
+    grep -q ' OpenSSL/3\.' /tmp/curl-version.txt; \
+    rm -f /tmp/curl-version.txt; \
+    test -f "${SSL_PREFIX}/lib/pkgconfig/libcurl.pc"
 
 # Build fails here rather than shipping a provider that does not load, or one
 # the default properties do not select.
@@ -185,7 +228,6 @@ RUN apk add --no-cache \
     cmake \
     coreutils \
     curl \
-    curl-dev \
     findutils \
     git \
     glibc-dev \
@@ -234,7 +276,7 @@ ENV PATH="${SSL_PREFIX}/bin:${PATH}"
 WORKDIR /tmp
 # The opam-repository index is fetched once here. Bump the date to force the
 # layer to run again when a package published on a newer snapshot is missing.
-ARG OPAM_INDEX_DATE=2026-09-15
+ARG OPAM_INDEX_DATE=2026-10-21
 RUN echo "opam-repository index refreshed ${OPAM_INDEX_DATE}" && \
     opam init -ay --disable-sandboxing --bare
 # Only the dependency manifests reach this layer, so a source change does not
@@ -306,14 +348,12 @@ ENV TERRAT_BRAND=terrateam
 RUN apk add --no-cache \
     bash \
     ca-certificates \
-    curl \
     gettext \
     gmp \
     jq \
     libffi \
+    libnghttp2-14 \
     nginx-stable \
-    python-3.13 \
-    py3.13-requests \
     runit \
     sudo \
     zlib
@@ -325,7 +365,8 @@ RUN set -eux; \
     echo "${SSL_PREFIX}/lib" > /etc/ld.so.conf.d/openssl-fips.conf; \
     rm -f /usr/lib/libssl.so.3 /usr/lib/libcrypto.so.3; \
     ldconfig; \
-    ln -sf "${SSL_PREFIX}/bin/openssl" /usr/bin/openssl
+    ln -sf "${SSL_PREFIX}/bin/openssl" /usr/bin/openssl; \
+    ln -sf "${SSL_PREFIX}/bin/curl" /usr/bin/curl
 
 # docker/terrat/service/nginx execs /usr/sbin/nginx, which Wolfi reaches
 # through its /usr/sbin -> bin symlink.
@@ -333,17 +374,17 @@ RUN test -x /usr/sbin/nginx
 
 RUN addgroup -S terrat && adduser -S -G terrat terrat
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /etc/service/nginx/control /usr/local/share/terrat/ui/assets
-COPY docker/terrat/install-ca-cert.py /usr/local/bin/install-ca-cert
+COPY docker/terrat/fips/install-ca-cert /usr/local/bin/install-ca-cert
 RUN chmod 755 /usr/local/bin/install-ca-cert && \
     chown root:root /usr/local/bin/install-ca-cert
-RUN echo 'terrat ALL=(root) NOPASSWD:SETENV: /usr/local/bin/install-ca-cert' > /etc/sudoers.d/terrat && \
+RUN echo 'terrat ALL=(root) NOPASSWD: /usr/local/bin/install-ca-cert' > /etc/sudoers.d/terrat && \
     chmod 440 /etc/sudoers.d/terrat
 # nginx on Wolfi keeps its prefix at /var/lib/nginx and its pid at
 # /run/nginx.pid, and it creates the temp directories itself only when the
 # parent is writable.
 RUN mkdir -p /var/lib/nginx/tmp /var/log/nginx /run && \
     chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
-COPY docker/terrat/service/terrat /etc/service/terrat/run
+COPY --chmod=755 docker/terrat/fips/service-terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY --chmod=755 docker/terrat/runit-init /usr/local/bin/runit-init
 COPY --chmod=755 docker/terrat/service/nginx-control-t /etc/service/nginx/control/t
@@ -360,18 +401,26 @@ RUN set -eux; \
         echo "MD5 is reachable: the FIPS properties are not in force" >&2; exit 1; \
     fi
 
-# /etc/service/terrat/run is Python, so the image ships an interpreter whose
-# hashlib import must stay silent and whose digests must come out of the FIPS
-# module.
+# Wolfi links some packages to OpenSSL 4 (libcrypto.so.4, libssl.so.4), which
+# has no FIPS build here. apk-tools keeps those libraries; no other program of
+# the runtime may link them. update-ca-certificates hashes /etc/ssl/certs with
+# the c_rehash of ca-certificates, which links them, so c_rehash runs the
+# rehash of the FIPS openssl instead.
 RUN set -eux; \
-    python3 -c 'import hashlib' 2>&1 | tee /tmp/hashlib.txt; \
-    test ! -s /tmp/hashlib.txt; \
-    rm -f /tmp/hashlib.txt; \
-    python3 -c 'import hashlib; assert hashlib.sha256(b"abc").hexdigest() == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"'; \
-    if python3 -c 'import hashlib; hashlib.md5(b"abc")' > /dev/null 2>&1; then \
-        echo "MD5 answers a plain hashlib call: the FIPS properties are not in force" >&2; exit 1; \
+    printf '#!/bin/sh\nexec %s/bin/openssl rehash "$@"\n' "${SSL_PREFIX}" > /usr/bin/c_rehash; \
+    chmod 755 /usr/bin/c_rehash; \
+    elf="$(printf '\177ELF')"; \
+    find / -xdev -type f \( -perm -u+x -o -name '*.so*' \) \
+        ! -path /usr/bin/apk ! -path '/usr/lib/libapk.so*' \
+        ! -path '/usr/lib/libcrypto.so.4*' ! -path '/usr/lib/libssl.so.4*' > /tmp/files.txt; \
+    while read -r f; do \
+        [ "$(head -c 4 "$f")" = "$elf" ] && grep -qE 'lib(crypto|ssl)\.so\.4' "$f" && echo "$f"; \
+    done < /tmp/files.txt > /tmp/openssl4.txt || true; \
+    rm -f /tmp/files.txt; \
+    if [ -s /tmp/openssl4.txt ]; then \
+        echo "These programs link OpenSSL 4, outside the FIPS module:" >&2; cat /tmp/openssl4.txt >&2; exit 1; \
     fi; \
-    python3 -c 'import hashlib; assert hashlib.md5(b"abc", usedforsecurity=False).hexdigest() == "900150983cd24fb0d6963f7d28e17f72"'
+    rm -f /tmp/openssl4.txt
 
 USER terrat
 EXPOSE 8080
@@ -379,3 +428,13 @@ CMD ["/usr/local/bin/runit-init"]
 
 FROM terrat-fips-base AS terrat-ee-fips
 COPY --from=terrat-build /tmp/mono/_build/default/code/src/terrat_ee/terrat_ee.exe /usr/local/bin/terrat
+# terrat loads libcurl and libtls from the FIPS builds, and no OpenSSL 4.
+RUN set -eux; \
+    ld="$(ls /lib/ld-linux-* /usr/lib/ld-linux-* 2>/dev/null | head -n 1)"; \
+    "$ld" --list /usr/local/bin/terrat | tee /tmp/libs.txt; \
+    grep -q "${SSL_PREFIX}/lib/libcurl\.so\.4" /tmp/libs.txt; \
+    grep -q "${SSL_PREFIX}/lib/libtls\.so" /tmp/libs.txt; \
+    if grep -qE 'lib(crypto|ssl)\.so\.4' /tmp/libs.txt; then \
+        echo "terrat loads OpenSSL 4, outside the FIPS module" >&2; exit 1; \
+    fi; \
+    rm -f /tmp/libs.txt
