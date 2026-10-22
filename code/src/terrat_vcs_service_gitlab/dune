@@ -3,6 +3,7 @@
  (wrapped false)
  (libraries
   ISO8601
+  duration
   gitlab_webhooks
   gitlab_webhooks_decoder
   jsonu

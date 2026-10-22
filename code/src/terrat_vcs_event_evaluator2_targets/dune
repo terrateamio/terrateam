@@ -1,6 +1,7 @@
 (library
  (name terrat_vcs_event_evaluator2_targets)
  (libraries
+  duration
   hmap
   mql
   terrat_base_repo_config_v1

@@ -216,6 +216,7 @@ type t = {
   tree_builder : Terrat_repo_config_tree_builder.t option; [@default None]
   version : Version.t; [@default `V_1]
   when_modified : Terrat_repo_config_when_modified.t option; [@default None]
+  work_manifests : Terrat_repo_config_work_manifests.t option; [@default None]
   workflows : Workflows.t option; [@default None]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

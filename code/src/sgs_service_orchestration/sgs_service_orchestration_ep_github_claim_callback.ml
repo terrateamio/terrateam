@@ -2,7 +2,7 @@ let src = Logs.Src.create "service_orchestration_ep_github_claim_callback"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
-let run' config storage ctx code state =
+let run' config storage ctx code state setup_action =
   let open Abb.Future.Infix_monad in
   let redirect ?proof ~rd result =
     Sgs_service_orchestration_github_claim_common.redirect_with ?proof ~config ~rd ~result ctx
@@ -16,14 +16,17 @@ let run' config storage ctx code state =
   else
     match (code, state) with
     (* GitHub sends the user here after an app installation too, with
-       installation_id and setup_action but no state. There is no handshake
-       to finish and the code that may ride along is bound to nobody, so it
-       is ignored: the browser is put back on the claim screen, which offers
-       to start a real handshake. Answered without a read, so an install
-       still lands well while the database is unreachable. *)
-    | _, None ->
+       installation_id and setup_action, and with the console's install
+       marker or no state at all. There is no handshake to finish and the
+       code that may ride along is bound to nobody, so it is ignored: the
+       browser is put back on the claim screen, which offers to start a real
+       handshake. Answered without a read, so an install still lands well
+       while the database is unreachable. *)
+    | _, (None | Some "stategraph") -> (
         Logs.info (fun m -> m "%s : GITHUB_CLAIM_NO_STATE" (Brtl_ctx.token ctx));
-        redirect ~rd:None `Installed
+        match setup_action with
+        | Some "request" -> redirect ~rd:None `Requested
+        | _ -> redirect ~rd:None `Installed)
     (* A state without a code is not something GitHub produces; treat it as
        a mangled return rather than trying to make sense of it. *)
     | None, Some _ ->
@@ -124,7 +127,7 @@ let run' config storage ctx code state =
         | Error (#Sgs_service_orchestration_github_claim_common.fault_err as err) ->
             fault ~rd:None err)
 
-let run config storage code state =
+let run config storage code state setup_action =
   (* No ~caps gate: the state token is the authority here, and it is bound to
      the user and tenant that started the handshake. *)
-  Brtl_ep.run_json ~f:(fun ctx -> run' config storage ctx code state)
+  Brtl_ep.run_json ~f:(fun ctx -> run' config storage ctx code state setup_action)

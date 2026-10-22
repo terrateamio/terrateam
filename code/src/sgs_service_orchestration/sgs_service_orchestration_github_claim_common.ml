@@ -46,6 +46,7 @@ let default_redirect = "/getting-started/?path=github"
 type redirect_result =
   [ `Ready
   | `Installed
+  | `Requested
   | `No_admin
   | `Forbidden
   | `Expired
@@ -57,6 +58,7 @@ type redirect_result =
 let redirect_result_to_string = function
   | `Ready -> "ready"
   | `Installed -> "installed"
+  | `Requested -> "requested"
   | `No_admin -> "no_admin"
   | `Forbidden -> "forbidden"
   | `Expired -> "expired"

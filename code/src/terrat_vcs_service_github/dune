@@ -3,6 +3,7 @@
  (wrapped false)
  (libraries
   ISO8601
+  duration
   jsonu
   logs
   mql_sql

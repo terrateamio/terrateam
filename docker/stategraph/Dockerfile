@@ -339,6 +339,15 @@ FROM stategraph-pricing-code AS stategraph-pricing-development
 ARG USERNAME
 ARG DUNE_CACHE_ID
 
+# The Go toolchain is the `go` package that `base` installed, and a builder with
+# a persistent layer cache goes on reusing that layer, so the binaries built
+# below would ship the standard library of a weeks-old Go. OS_REFRESH keys this
+# upgrade on the build date, as in stategraph-server-base.
+ARG OS_REFRESH
+USER root
+RUN apk upgrade --no-cache go
+USER ${USERNAME}
+
 # Builds the Go pricing-service so it ships in stategraph-dev (for CI cost
 # tests) as well as the production image. Mirrors the cache pattern of the
 # main `make -C code stategraph` step below: a BuildKit cache for dune's

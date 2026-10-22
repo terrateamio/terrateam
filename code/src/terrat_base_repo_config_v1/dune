@@ -3,6 +3,7 @@
  (libraries
   containers
   containers-data
+  duration
   iter
   jsonschema_check
   lua_pattern
